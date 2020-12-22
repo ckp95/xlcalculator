@@ -707,12 +707,14 @@ bit_widths = {bin: 10, oct: 30, hex: 40}
 def dec_to_base(value: int, base: Base) -> str:
     bit_width = bit_widths[base]
     offset = bit_width - 10
-    value = value if value >= 0 else (1 << bit_width) + value
     
-    left_segment = ((1 << offset) - 1) << 10 if (value.bit_length() == 10 and value < 0) else 0
-    spliced = left_segment + value
+    if value < 0:
+        value += (1 << bit_width)
     
-    return base(spliced).strip("-")[2:].upper()
+    if value < 0 and value.bit_length() == 10:
+        value += ((1 << offset) - 1) << 10
+    
+    return base(value).strip("-")[2:].upper()
 
 
 def base_to_dec(value: str, base: Base) -> int:
