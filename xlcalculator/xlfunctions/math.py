@@ -709,7 +709,7 @@ def dec_to_base(value: int, base: Base) -> str:
     offset = bit_width - 10
     value = value if value >= 0 else (1 << bit_width) + value
     
-    left_segment = ((1 << offset) - 1) << 10 if value.bit_length() == 10 else 0
+    left_segment = ((1 << offset) - 1) << 10 if (value.bit_length() == 10 and value < 0) else 0
     spliced = left_segment + value
     
     return base(spliced).strip("-")[2:].upper()
@@ -785,4 +785,11 @@ def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 @xl.register()
 @xl.validate_args
 def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
-    pass
+    number = int(number)
+    if not (-2**39 <= number < 2**39):
+        raise xlerrors.NumExcelError
+    
+    return dec_to_base(number, hex)
+
+
+

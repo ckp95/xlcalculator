@@ -412,7 +412,10 @@ def test_dec2bin(number, expected):
     Case(number=536870912, expected=xlerrors.NumExcelError),
     Case(number=536870911, expected="3777777777"),
     Case(number=1.9, expected="1"),
-    Case(number=-123, expected="7777777605")
+    Case(number=-123, expected="7777777605"),
+    Case(number=511, expected="777"),
+    Case(number=512, expected="1000"),
+    Case(number=513, expected="1001"),
 )
 def test_dec2oct(number, expected):
     assert_equivalent(math.DEC2OCT(number), expected)
