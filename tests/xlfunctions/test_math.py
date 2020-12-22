@@ -327,3 +327,92 @@ class MathModuleTest(unittest.TestCase):
             math.TRUNC('bad'), xlerrors.ValueExcelError)
         self.assertIsInstance(
             math.TRUNC(1.3, 'bad'), xlerrors.ValueExcelError)
+
+
+# base conversions
+
+from .case import Case, parametrize_cases
+
+
+def assert_equivalent(result, expected):
+    if isinstance(expected, type) and issubclass(expected, xlerrors.ExcelError):
+        assert isinstance(result, expected)
+    else:
+        assert result == expected
+
+
+@parametrize_cases(
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=2, expected=xlerrors.NumExcelError),
+    Case(number=11111111110, expected=xlerrors.NumExcelError),
+    Case(number=0, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=101010, expected="42"),
+    Case(number=111111111, expected="511"),
+    Case(number=1000000000, expected="-512"),
+    Case(number=1111111111, expected="-1"),
+)
+def test_bin2dec(number, expected):
+    assert_equivalent(math.BIN2DEC(number), expected)
+        
+
+@parametrize_cases(
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=2, expected=xlerrors.NumExcelError),
+    Case(number=11111111110, expected=xlerrors.NumExcelError),
+    Case(number=0, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=101010, expected="52"),
+    Case(number=111111111, expected="777"),
+    Case(number=1000000000, expected="7777777000"),
+)
+def test_bin2oct(number, expected):
+    assert_equivalent(math.BIN2OCT(number), expected)
+
+
+@parametrize_cases(
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=2, expected=xlerrors.NumExcelError),
+    Case(number=11111111110, expected=xlerrors.NumExcelError),
+    Case(number=0, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=101010, expected="2A"),
+    Case(number=111111111, expected="1FF"),
+    Case(number=1000000000, expected="FFFFFFFE00"),
+)
+def test_bin2hex(number, expected):
+    assert_equivalent(math.BIN2HEX(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=0, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=9, expected="1001"),
+    Case(number=-513, expected=xlerrors.NumExcelError),
+    Case(number=-512, expected="1000000000"),
+    Case(number=512, expected=xlerrors.NumExcelError),
+    Case(number=511, expected="111111111"),
+    Case(number=1.1, expected="1"),
+    Case(number=1.5, expected="1"),
+    Case(number=1.9, expected="1"),
+    Case(number=-1, expected="1111111111"),
+    Case(number=-1.9, expected="1111111111"),
+    Case(number=-123, expected="1110000101")
+)
+def test_dec2bin(number, expected):
+    assert_equivalent(math.DEC2BIN(number), expected)
+
+
+@parametrize_cases(
+    Case(number=0, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=9, expected="11"),
+    Case(number=-536870913, expected=xlerrors.NumExcelError),
+    Case(number=-536870912, expected="4000000000"),
+    Case(number=536870912, expected=xlerrors.NumExcelError),
+    Case(number=536870911, expected="3777777777"),
+    Case(number=1.9, expected="1"),
+    Case(number=-123, expected="7777777605")
+)
+def test_dec2oct(number, expected):
+    assert_equivalent(math.DEC2OCT(number), expected)

@@ -696,3 +696,93 @@ def TRUNC(
     num_digits = int(num_digits)
 
     return math.trunc(number * 10**num_digits) / 10**num_digits
+
+
+from typing_extensions import Literal
+
+Base = Literal[bin, oct, hex]
+bit_widths = {bin: 10, oct: 30, hex: 40}
+
+    
+def dec_to_base(value: int, base: Base) -> str:
+    bit_width = bit_widths[base]
+    offset = bit_width - 10
+    value = value if value >= 0 else (1 << bit_width) + value
+    
+    left_segment = ((1 << offset) - 1) << 10 if value.bit_length() == 10 else 0
+    spliced = left_segment + value
+    
+    return base(spliced).strip("-")[2:].upper()
+
+
+def base_to_dec(value: str, base: Base) -> int:
+    value = int(value, {bin: 2, oct: 8, hex: 16}[base])
+    bit_width = bit_widths[base]
+    mask = 1 << bit_width - 1
+    
+    return (value & ~mask) - (value & mask)
+
+
+def base_to_base(value: str, base_in: Base, base_out: Base) -> str:
+    return dec_to_base(base_to_dec(value, base_in), base_out)
+
+
+# still need to do error handling for too-big, blank etc
+
+
+def parse_binary(number: int) -> str:
+    if number < 0:
+        raise xlerrors.NumExcelError(f"Input must be greater than or equal to 0; got {number}")
+    
+    as_str = str(number)
+    if len(as_str) > 10:
+        raise xlerrors.NumExcelError(f"Input must not have more than 10 bits; got {len(as_str)}")
+    
+    if set(as_str) - {"0", "1"}:
+        raise xlerrors.NumExcelError(f"Input must only contain digits 1 and 0; got {number}")
+    
+    return as_str
+
+
+@xl.register()
+@xl.validate_args
+def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlText:    
+    return base_to_dec(parse_binary(number), bin)
+
+
+@xl.register()
+@xl.validate_args
+def BIN2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:    
+    return base_to_base(parse_binary(number), bin, oct)
+
+
+@xl.register()
+@xl.validate_args
+def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    return base_to_base(parse_binary(number), bin, hex)
+
+
+@xl.register()
+@xl.validate_args
+def DEC2BIN(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    number = int(number)
+    if not (-512 <= number < 512):
+        raise xlerrors.NumExcelError
+    
+    return dec_to_base(number, bin)
+
+
+@xl.register()
+@xl.validate_args
+def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    number = int(number)
+    if not (-2**29 <= number < 2**29):
+        raise xlerrors.NumExcelError
+    
+    return dec_to_base(number, oct)
+
+
+@xl.register()
+@xl.validate_args
+def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    pass
