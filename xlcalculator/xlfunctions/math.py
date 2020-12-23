@@ -788,9 +788,9 @@ def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 @xl.validate_args
 def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     number = int(number)
-    # yes, the bounds are inexplicably slightly wider for dec2hex
-    # compared to dec2bin and dec2oct
-    if not (-2**39 - 1 <= number < 2**39 + 1):
+    # Note: in LibreOffice the bounds may be different, see
+    # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
+    if not (-2**39 <= number < 2**39):
         raise xlerrors.NumExcelError
     
     return dec_to_base(number, hex)

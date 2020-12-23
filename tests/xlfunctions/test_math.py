@@ -424,8 +424,10 @@ def test_dec2oct(number, expected):
 @parametrize_cases(
     Case(number=0, expected="0"),
     Case(number=1234, expected="4D2"),
-    Case(number=2**39, expected="8000000000"),
-    Case(number=-2**39 - 1, expected="7FFFFFFFFF")
+    Case(number=2**39 - 1, expected="7FFFFFFFFF"),
+    Case(number=2**39, expected=xlerrors.NumExcelError),
+    Case(number=-2**39, expected="8000000000"),
+    Case(number=-2**39 - 1, expected=xlerrors.NumExcelError)
 )
 def test_dec2hex(number, expected):
     assert_equivalent(math.DEC2HEX(number), expected)
