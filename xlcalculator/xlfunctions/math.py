@@ -768,7 +768,7 @@ def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 @xl.validate_args
 def DEC2BIN(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     number = int(number)
-    if not (-512 <= number < 512):
+    if not (-2**9 <= number < 2**9):
         raise xlerrors.NumExcelError
     
     return dec_to_base(number, bin)
@@ -788,7 +788,9 @@ def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 @xl.validate_args
 def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     number = int(number)
-    if not (-2**39 <= number < 2**39):
+    # yes, the bounds are inexplicably slightly wider for dec2hex
+    # compared to dec2bin and dec2oct
+    if not (-2**39 - 1 <= number < 2**39 + 1):
         raise xlerrors.NumExcelError
     
     return dec_to_base(number, hex)
