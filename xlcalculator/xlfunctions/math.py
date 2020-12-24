@@ -743,28 +743,28 @@ def parse_number(number: func_xltypes.XlText, base: Base) -> str:
 
 @xl.register()
 @xl.validate_args
-def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def BIN2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
     parsed = parse_number(number, bin) 
     return base_to_dec(parsed, bin)
 
 
 @xl.register()
 @xl.validate_args
-def BIN2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def BIN2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
     parsed = parse_number(number, bin)
     return base_to_base(parsed, bin, oct)
 
 
 @xl.register()
 @xl.validate_args
-def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def BIN2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
     parsed = parse_number(number, bin)
     return base_to_base(parsed, bin, hex)
 
 
 @xl.register()
 @xl.validate_args
-def DEC2BIN(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def DEC2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
     number = int(number)
     if not (-2**9 <= number < 2**9):
         raise xlerrors.NumExcelError
@@ -774,7 +774,7 @@ def DEC2BIN(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 
 @xl.register()
 @xl.validate_args
-def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def DEC2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
     number = int(number)
     if not (-2**29 <= number < 2**29):
         raise xlerrors.NumExcelError
@@ -784,7 +784,7 @@ def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 
 @xl.register()
 @xl.validate_args
-def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def DEC2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
     number = int(number)
     # Note: in LibreOffice Calc the bounds may be different; see
     # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
