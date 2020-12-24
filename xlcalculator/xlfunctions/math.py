@@ -1,6 +1,7 @@
 import decimal
 import math
 from typing import Tuple, Union
+from typing_extensions import Literal
 
 import numpy as np
 import pandas as pd
@@ -698,12 +699,10 @@ def TRUNC(
     return math.trunc(number * 10**num_digits) / 10**num_digits
 
 
-from typing_extensions import Literal
-
 Base = Literal[bin, oct, hex]
 bit_widths = {bin: 10, oct: 30, hex: 40}
 
-    
+
 def dec_to_base(value: int, base: Base) -> str:
     bit_width = bit_widths[base]
     offset = bit_width - 10

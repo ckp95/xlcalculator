@@ -3,6 +3,7 @@ import math as pymath
 import mock
 
 from xlcalculator.xlfunctions import math, xlerrors, func_xltypes
+from .case import Case, parametrize_cases
 
 
 class MathModuleTest(unittest.TestCase):
@@ -330,8 +331,6 @@ class MathModuleTest(unittest.TestCase):
 
 
 # base conversions
-
-from .case import Case, parametrize_cases
 
 
 def assert_equivalent(result, expected):
