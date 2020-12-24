@@ -431,3 +431,28 @@ def test_dec2oct(number, expected):
 )
 def test_dec2hex(number, expected):
     assert_equivalent(math.DEC2HEX(number), expected)
+    
+
+@parametrize_cases(
+    Case(number="1000", expected=xlerrors.NumExcelError),
+    Case(number="7777777000", expected="1000000000")
+)
+def test_oct2bin(number, expected):
+    assert_equivalent(math.OCT2BIN(number), expected)
+    
+
+@parametrize_cases(
+    Case(number="200", expected=xlerrors.NumExcelError),
+    Case(number="G", expected=xlerrors.NumExcelError),
+    Case(number="FFFFFFFE00", expected="1000000000")
+)
+def test_hex2bin(number, expected):
+    assert_equivalent(math.HEX2BIN(number), expected)
+
+
+@parametrize_cases(
+    Case(number="2000000000", expected=xlerrors.NumExcelError),
+    Case(number="FFE0000000", expected="4000000000")
+)
+def test_hex2oct(number, expected):
+    assert_equivalent(math.HEX2OCT(number), expected)

@@ -729,39 +729,38 @@ def base_to_base(value: str, base_in: Base, base_out: Base) -> str:
     return dec_to_base(base_to_dec(value, base_in), base_out)
 
 
-# still need to do error handling for too-big, blank etc
-
-
-def parse_binary(number: int) -> str:
-    if number < 0:
-        raise xlerrors.NumExcelError(f"Input must be greater than or equal to 0; got {number}")
-    
+def parse_number(number: func_xltypes.XlText, base: Base) -> str:
     as_str = str(number)
-    if len(as_str) > 10:
-        raise xlerrors.NumExcelError(f"Input must not have more than 10 bits; got {len(as_str)}")
     
-    if set(as_str) - {"0", "1"}:
-        raise xlerrors.NumExcelError(f"Input must only contain digits 1 and 0; got {number}")
+    if len(as_str) > 10:
+        raise xlerrors.NumExcelError(f"Input must not have more than 10 hex digits; got {len(as_str)}")
+    
+    digits = {bin: "01", oct: "01234567", hex: "0123456789ABCDEF"}[base]
+    if set(as_str.upper()) - set(digits):
+        raise xlerrors.NumExcelError(f"Input must be positive and only contain digits {digits}; got {as_str}")
     
     return as_str
 
 
 @xl.register()
 @xl.validate_args
-def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlText:    
-    return base_to_dec(parse_binary(number), bin)
+def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    parsed = parse_number(number, bin) 
+    return base_to_dec(parsed, bin)
 
 
 @xl.register()
 @xl.validate_args
-def BIN2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:    
-    return base_to_base(parse_binary(number), bin, oct)
+def BIN2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    parsed = parse_number(number, bin)
+    return base_to_base(parsed, bin, oct)
 
 
 @xl.register()
 @xl.validate_args
 def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
-    return base_to_base(parse_binary(number), bin, hex)
+    parsed = parse_number(number, bin)
+    return base_to_base(parsed, bin, hex)
 
 
 @xl.register()
@@ -788,7 +787,7 @@ def DEC2OCT(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
 @xl.validate_args
 def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     number = int(number)
-    # Note: in LibreOffice the bounds may be different, see
+    # Note: in LibreOffice Calc the bounds may be different; see
     # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
     if not (-2**39 <= number < 2**39):
         raise xlerrors.NumExcelError
@@ -796,4 +795,52 @@ def DEC2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     return dec_to_base(number, hex)
 
 
+@xl.register()
+@xl.validate_args
+def OCT2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    if 1000 <= int(number) < 7777777000:
+        raise xlerrors.NumExcelError
+    
+    parsed = parse_number(number, oct)
+    return base_to_base(parsed, oct, bin)
 
+
+@xl.register()
+@xl.validate_args
+def OCT2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    parsed = parse_number(number, oct)
+    return base_to_dec(parsed, oct)
+
+
+@xl.register()
+@xl.validate_args
+def OCT2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    parsed = parse_number(number, oct)
+    return base_to_base(parsed, oct, hex)
+
+
+@xl.register()
+@xl.validate_args
+def HEX2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    parsed = parse_number(number, hex)
+    if 0x200 <= int(str(parsed), 16) < 0xfffffffe00:
+        raise xlerrors.NumExcelError
+    
+    return base_to_base(parsed, hex, bin)
+
+
+@xl.register()
+@xl.validate_args
+def HEX2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    parsed = parse_number(number, hex)
+    if 0x20000000 <= int(str(parsed), 16) < 0xffe0000000:
+        raise xlerrors.NumExcelError
+    
+    return base_to_base(parsed, hex, oct)
+
+
+@xl.register()
+@xl.validate_args
+def HEX2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
+    parsed = parse_number(number, hex)
+    return base_to_dec(parsed, hex)
