@@ -3,7 +3,7 @@ import math as pymath
 import mock
 
 from xlcalculator.xlfunctions import math, xlerrors, func_xltypes
-from .case import Case, parametrize_cases
+from ..testing import Case, parametrize_cases, assert_equivalent
 
 
 class MathModuleTest(unittest.TestCase):
@@ -328,16 +328,6 @@ class MathModuleTest(unittest.TestCase):
             math.TRUNC('bad'), xlerrors.ValueExcelError)
         self.assertIsInstance(
             math.TRUNC(1.3, 'bad'), xlerrors.ValueExcelError)
-
-
-# base conversions
-
-
-def assert_equivalent(result, expected):
-    if isinstance(expected, type) and issubclass(expected, xlerrors.ExcelError):
-        assert isinstance(result, expected)
-    else:
-        assert result == expected
 
 
 @parametrize_cases(
