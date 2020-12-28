@@ -519,7 +519,13 @@ def test_places_bounds(func, number, places):
         places=3,
         expected=xlerrors.NumExcelError
     ),
-    
+    Case(
+        "BLANK interpreted as 0",
+        func=math.HEX2BIN,
+        number=func_xltypes.BLANK,
+        places=3,
+        expected="000"
+    ),
 )
 def test_places_misc(func, number, places, expected):
     result = func(number, places)
