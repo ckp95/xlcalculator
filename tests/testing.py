@@ -218,6 +218,7 @@ def workbook_test_cases(filename: str) -> MarkDecorator:
 def assert_equivalent(result, expected, normalize: Optional[Callable]=None):
     if isinstance(expected, type) and issubclass(expected, xlerrors.ExcelError):
         assert isinstance(result, expected)
+    elif normalize:
+        assert normalize(result, expected)
     else:
-        normalize = normalize or (lambda x: x)
-        assert normalize(result) == normalize(expected)
+        assert result == expected
