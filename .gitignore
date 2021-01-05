@@ -6,3 +6,9 @@ ve
 .coverage
 .tox
 coverage.xml
+
+
+.venv/*
+.vscode/*
+.hypothesis/*
+.python-version
