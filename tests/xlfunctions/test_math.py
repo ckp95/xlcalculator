@@ -331,202 +331,24 @@ class MathModuleTest(unittest.TestCase):
 
 
 @parametrize_cases(
-    Case(number=-1, expected=xlerrors.NumExcelError),
-    Case(number=2, expected=xlerrors.NumExcelError),
-    Case(number=11111111110, expected=xlerrors.NumExcelError),
     Case(number=0, expected="0"),
-    Case(number=1, expected="1"),
-    Case(number=101010, expected="42"),
-    Case(number=111111111, expected="511"),
-    Case(number=1000000000, expected="-512"),
-    Case(number=1111111111, expected="-1"),
-)
-def test_bin2dec(number, expected):
-    assert_equivalent(math.BIN2DEC(number), expected)
-        
-
-@parametrize_cases(
-    Case(number=-1, expected=xlerrors.NumExcelError),
-    Case(number=2, expected=xlerrors.NumExcelError),
-    Case(number=11111111110, expected=xlerrors.NumExcelError),
-    Case(number=0, expected="0"),
-    Case(number=1, expected="1"),
-    Case(number=101010, expected="52"),
-    Case(number=111111111, expected="777"),
-    Case(number=1000000000, expected="7777777000"),
-)
-def test_bin2oct(number, expected):
-    assert_equivalent(math.BIN2OCT(number), expected)
-
-
-@parametrize_cases(
-    Case(number=-1, expected=xlerrors.NumExcelError),
-    Case(number=2, expected=xlerrors.NumExcelError),
-    Case(number=11111111110, expected=xlerrors.NumExcelError),
-    Case(number=0, expected="0"),
-    Case(number=1, expected="1"),
-    Case(number=101010, expected="2A"),
-    Case(number=111111111, expected="1FF"),
-    Case(number=1000000000, expected="FFFFFFFE00"),
-)
-def test_bin2hex(number, expected):
-    assert_equivalent(math.BIN2HEX(number), expected)
-    
-
-@parametrize_cases(
-    Case(number=0, expected="0"),
-    Case(number=1, expected="1"),
-    Case(number=9, expected="1001"),
-    Case(number=-513, expected=xlerrors.NumExcelError),
-    Case(number=-512, expected="1000000000"),
     Case(number=512, expected=xlerrors.NumExcelError),
-    Case(number=511, expected="111111111"),
-    Case(number=1.1, expected="1"),
-    Case(number=1.5, expected="1"),
-    Case(number=1.9, expected="1"),
+    Case(number=-513, expected=xlerrors.NumExcelError),
+    Case(number=1, expected="1"),
     Case(number=-1, expected="1111111111"),
-    Case(number=-1.9, expected="1111111111"),
-    Case(number=-123, expected="1110000101")
+    Case(number=-2, expected="1111111110")
 )
 def test_dec2bin(number, expected):
     assert_equivalent(math.DEC2BIN(number), expected)
 
 
 @parametrize_cases(
-    Case(number=0, expected="0"),
-    Case(number=1, expected="1"),
-    Case(number=9, expected="11"),
-    Case(number=-536870913, expected=xlerrors.NumExcelError),
-    Case(number=-536870912, expected="4000000000"),
-    Case(number=536870912, expected=xlerrors.NumExcelError),
-    Case(number=536870911, expected="3777777777"),
-    Case(number=1.9, expected="1"),
-    Case(number=-123, expected="7777777605"),
-    Case(number=511, expected="777"),
-    Case(number=512, expected="1000"),
-    Case(number=513, expected="1001"),
+    Case(number=0, places=0, expected=xlerrors.NumExcelError),
+    Case(number=0, places=1, expected="0"),
+    Case(number=0, places=2, expected="00"),
+    Case(number=0, places=11, expected=xlerrors.NumExcelError),
+    Case(number=2, places=1, expected=xlerrors.NumExcelError),
+    Case(number=-1, places=1, expected="1111111111")
 )
-def test_dec2oct(number, expected):
-    assert_equivalent(math.DEC2OCT(number), expected)
-    
-    
-@parametrize_cases(
-    Case(number=0, expected="0"),
-    Case(number=1234, expected="4D2"),
-    Case(number=2**39 - 1, expected="7FFFFFFFFF"),
-    Case(number=2**39, expected=xlerrors.NumExcelError),
-    Case(number=-2**39, expected="8000000000"),
-    Case(number=-2**39 - 1, expected=xlerrors.NumExcelError)
-)
-def test_dec2hex(number, expected):
-    assert_equivalent(math.DEC2HEX(number), expected)
-    
-
-@parametrize_cases(
-    Case(number="1000", expected=xlerrors.NumExcelError),
-    Case(number="7777777000", expected="1000000000")
-)
-def test_oct2bin(number, expected):
-    assert_equivalent(math.OCT2BIN(number), expected)
-    
-
-@parametrize_cases(
-    Case(number="200", expected=xlerrors.NumExcelError),
-    Case(number="G", expected=xlerrors.NumExcelError),
-    Case(number="FFFFFFFE00", expected="1000000000")
-)
-def test_hex2bin(number, expected):
-    assert_equivalent(math.HEX2BIN(number), expected)
-
-
-@parametrize_cases(
-    Case(number="2000000000", expected=xlerrors.NumExcelError),
-    Case(number="FFE0000000", expected="4000000000")
-)
-def test_hex2oct(number, expected):
-    assert_equivalent(math.HEX2OCT(number), expected)
-
-
-placeable_funcs = parametrize_cases(
-    Case(func=math.BIN2OCT),
-    Case(func=math.BIN2HEX),
-    Case(func=math.OCT2BIN),
-    Case(func=math.OCT2HEX),
-    Case(func=math.DEC2BIN),
-    Case(func=math.DEC2OCT),
-    Case(func=math.DEC2HEX),
-    Case(func=math.HEX2BIN),
-    Case(func=math.HEX2OCT),
-)
-
-
-@placeable_funcs
-def test_places_output_length(func):
-    normal = str(func("10"))
-    six_places = str(func("10", places=6))
-    assert len(six_places) == 6
-    
-
-@placeable_funcs
-def test_places_suffix_is_equal_prefix_is_zeroes(func):
-    normal = str(func("10"))
-    six_places = str(func("10", places=6))
-    
-    prefix, suffix = six_places[:-len(normal)], six_places[-len(normal):]
-    assert suffix == normal
-    assert set(prefix) == {"0"}
-    
-
-@placeable_funcs
-@parametrize_cases(
-    Case(number="10"),
-    Case(number="123"),
-    Case(number="0"),
-    Case(number="111111111111111")
-)
-@parametrize_cases(Case(places=0), Case(places=11))
-def test_places_bounds(func, number, places):
-    result = func(number, places)
-    assert isinstance(result, xlerrors.NumExcelError)
-
-
-@parametrize_cases(
-    Case(
-        "insufficent places gives #NUM",
-        func=math.OCT2BIN,
-        number="10",
-        places=1,
-        expected=xlerrors.NumExcelError
-    ),
-    Case(
-        "dec2 functions ignore places for negative values",
-        func=math.DEC2BIN,
-        number="-11",
-        places=3,
-        expected="1111110101"
-    ),
-    Case(
-        "dec2 functions give #VALUE for non-numeric inputs",
-        func=math.DEC2BIN,
-        number="E",
-        places=3,
-        expected=xlerrors.ValueExcelError
-    ),
-    Case(
-        "non-dec2 functions give #NUM for non-numeric inputs",
-        func=math.OCT2BIN,
-        number="E",
-        places=3,
-        expected=xlerrors.NumExcelError
-    ),
-    Case(
-        "BLANK interpreted as 0",
-        func=math.HEX2BIN,
-        number=func_xltypes.BLANK,
-        places=3,
-        expected="000"
-    ),
-)
-def test_places_misc(func, number, places, expected):
-    result = func(number, places)
-    assert_equivalent(result=result, expected=expected)
+def test_dec2bin_with_places(number, places, expected):
+    assert_equivalent(math.DEC2BIN(number, places), expected)
