@@ -700,216 +700,260 @@ def TRUNC(
     return math.trunc(number * 10**num_digits) / 10**num_digits
 
 
-Base = Literal[bin, oct, hex]
-bit_widths = {bin: 10, oct: 30, hex: 40}
+class Unused:
+    pass
 
 
-def dec_to_base(value: int, base: Base) -> str:
-    bit_width = bit_widths[base]
-    offset = bit_width - 10
-    
-    if value < 0:
-        value += (1 << bit_width)
-    
-    if value < 0 and value.bit_length() == 10:
-        value += ((1 << offset) - 1) << 10
-    
-    return base(value).strip("-")[2:].upper()
+UNUSED = Unused()
 
-
-def handle_places(func):
-    """Handle places awkwardness"""
-    
-    def new_func(number: func_xltypes.XlText, places: Optional[func_xltypes.XlNumber] = None) -> func_xltypes.XlText:
-        # print(repr(places))
-        
-        if places is not None:
-            places = int(places)
-            if not (1 <= places <= 10):
-                raise xlerrors.NumExcelError(f"Places must be between 1 and 10; got {places}")
-        
-        result = func(number)
-        
-        if places is None or str(number).startswith("-"):
-            # negative numbers ignore valid place parameters for some reason
-            return result
-        
-        if places < len(result):
-            raise xlerrors.NumExcelError(f"{places} places is not enough to represent {result}")
-        
-        return result.zfill(places)
-    
-    new_func.__name__ = func.__name__ # can't use functools.wraps bc it breaks the signature
-    return new_func
-
-
-def override_int_handling(func):
-    @wraps(func)
-    def new_func(number: func_xltypes.XlText) -> func_xltypes.XlText:
-        try:
-            int(number)
-        except xlerrors.ValueExcelError as e:
-            raise xlerrors.NumExcelError from e
-        
-        return func(number)
-    
-    return new_func
-
-
-def base_to_dec(value: str, base: Base) -> int:
-    value = int(value, {bin: 2, oct: 8, hex: 16}[base])
-    bit_width = bit_widths[base]
-    mask = 1 << bit_width - 1
-    
-    return (value & ~mask) - (value & mask)
-
-
-def base_to_base(value: str, base_in: Base, base_out: Base) -> str:
-    return dec_to_base(base_to_dec(value, base_in), base_out)
-
-
-def parse_number(number: func_xltypes.XlText, base: Base) -> str:
-    as_str = str(number)
-    
-    if len(as_str) > 10:
-        raise xlerrors.NumExcelError(f"Input must not have more than 10 hex digits; got {len(as_str)}")
-    
-    digits = {bin: "01", oct: "01234567", hex: "0123456789ABCDEF"}[base]
-    if set(as_str.upper()) - set(digits):
-        raise xlerrors.NumExcelError(f"Input must be positive and only contain digits {digits}; got {as_str}")
-    
-    return as_str
+def unused(x):
+    return x is UNUSED
 
 
 @xl.register()
 @xl.validate_args
-@override_int_handling
-def BIN2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, bin) 
-    return base_to_dec(parsed, bin)
-
-
-@xl.register()
-@xl.validate_args
-@handle_places
-@override_int_handling
-def BIN2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, bin)
-    return base_to_base(parsed, bin, oct)
-
-
-@xl.register()
-@xl.validate_args
-@handle_places
-@override_int_handling
-def BIN2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, bin)
-    return base_to_base(parsed, bin, hex)
-
-
-@xl.register()
-@xl.validate_args
-@handle_places
-def DEC2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
+def DEC2BIN(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if unused(places):
+        places = None
+    else:
+        places = int(places)
+        if not (0 < places <= 10):
+            raise xlerrors.NumExcelError
+    
     number = int(number)
-    if not (-2**9 <= number < 2**9):
+    if not (-513 < number < 512):
         raise xlerrors.NumExcelError
     
-    return dec_to_base(number, bin)
-
-
-@xl.register()
-@xl.validate_args
-@handle_places
-def DEC2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    number = int(number)
-    if not (-2**29 <= number < 2**29):
+    negative = number < 0
+    bit_width = 10
+    if negative:
+        number += (1 << bit_width)
+    
+    string = bin(number)[2:]
+    if places is None:
+        return string
+    
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
         raise xlerrors.NumExcelError
     
-    return dec_to_base(number, oct)
+    return string.zfill(desired_length)
 
 
-@xl.register()
-@xl.validate_args
-@handle_places
-def DEC2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    number = int(number)
-    # Note: in LibreOffice Calc the bounds may be different; see
-    # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
-    if not (-2**39 <= number < 2**39):
-        raise xlerrors.NumExcelError
+
+# Base = Literal[bin, oct, hex]
+# bit_widths = {bin: 10, oct: 30, hex: 40}
+
+
+# def dec_to_base(value: int, base: Base) -> str:
+#     bit_width = bit_widths[base]
+#     offset = bit_width - 10
     
-    return dec_to_base(number, hex)
+#     if value < 0:
+#         value += (1 << bit_width)
+    
+#     if value < 0 and value.bit_length() == 10:
+#         value += ((1 << offset) - 1) << 10
+    
+#     return base(value).strip("-")[2:].upper()
+
+
+# def handle_places(func):
+#     """Handle places awkwardness"""
+    
+#     def new_func(number: func_xltypes.XlText, places: Optional[func_xltypes.XlNumber] = None) -> func_xltypes.XlText:
+#         # print(repr(places))
+        
+#         if places is not None:
+#             places = int(places)
+#             if not (1 <= places <= 10):
+#                 raise xlerrors.NumExcelError(f"Places must be between 1 and 10; got {places}")
+        
+#         result = func(number)
+        
+#         if places is None or str(number).startswith("-"):
+#             # negative numbers ignore valid place parameters for some reason
+#             return result
+        
+#         if places < len(result):
+#             raise xlerrors.NumExcelError(f"{places} places is not enough to represent {result}")
+        
+#         return result.zfill(places)
+    
+#     new_func.__name__ = func.__name__ # can't use functools.wraps bc it breaks the signature
+#     return new_func
+
+
+# def override_int_handling(func):
+#     @wraps(func)
+#     def new_func(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#         try:
+#             int(number)
+#         except xlerrors.ValueExcelError as e:
+#             raise xlerrors.NumExcelError from e
+        
+#         return func(number)
+    
+#     return new_func
+
+
+# def base_to_dec(value: str, base: Base) -> int:
+#     value = int(value, {bin: 2, oct: 8, hex: 16}[base])
+#     bit_width = bit_widths[base]
+#     mask = 1 << bit_width - 1
+    
+#     return (value & ~mask) - (value & mask)
+
+
+# def base_to_base(value: str, base_in: Base, base_out: Base) -> str:
+#     return dec_to_base(base_to_dec(value, base_in), base_out)
+
+
+# def parse_number(number: func_xltypes.XlText, base: Base) -> str:
+#     as_str = str(number)
+    
+#     if len(as_str) > 10:
+#         raise xlerrors.NumExcelError(f"Input must not have more than 10 hex digits; got {len(as_str)}")
+    
+#     digits = {bin: "01", oct: "01234567", hex: "0123456789ABCDEF"}[base]
+#     if set(as_str.upper()) - set(digits):
+#         raise xlerrors.NumExcelError(f"Input must be positive and only contain digits {digits}; got {as_str}")
+    
+#     return as_str
+
+
+# @xl.register()
+# @xl.validate_args
+# @override_int_handling
+# def BIN2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, bin) 
+#     return base_to_dec(parsed, bin)
+
+
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# @override_int_handling
+# def BIN2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, bin)
+#     return base_to_base(parsed, bin, oct)
+
+
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# @override_int_handling
+# def BIN2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, bin)
+#     return base_to_base(parsed, bin, hex)
+
+
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# def DEC2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     number = int(number) + 1
+#     if not (-2**9 <= number < 2**9):
+#         raise xlerrors.NumExcelError
+    
+#     return dec_to_base(number, bin)
+
+
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# def DEC2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     number = int(number)
+#     if not (-2**29 <= number < 2**29):
+#         raise xlerrors.NumExcelError
+    
+#     return dec_to_base(number, oct)
+
+
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# def DEC2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     number = int(number)
+#     # Note: in LibreOffice Calc the bounds may be different; see
+#     # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
+#     if not (-2**39 <= number < 2**39):
+#         raise xlerrors.NumExcelError
+    
+#     return dec_to_base(number, hex)
             
 
-@xl.register()
-@xl.validate_args
-@handle_places
-@override_int_handling
-def OCT2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:    
-    number = number or "0"
-    if 1000 <= int(number) < 7777777000:
-        raise xlerrors.NumExcelError
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# @override_int_handling
+# def OCT2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:    
+#     number = number or "0"
+#     if 1000 <= int(number) < 7777777000:
+#         raise xlerrors.NumExcelError
     
-    parsed = parse_number(number, oct)
-    return base_to_base(parsed, oct, bin)
+#     parsed = parse_number(number, oct)
+#     return base_to_base(parsed, oct, bin)
 
 
-@xl.register()
-@xl.validate_args
-@override_int_handling
-def OCT2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, oct)
-    return base_to_dec(parsed, oct)
+# @xl.register()
+# @xl.validate_args
+# @override_int_handling
+# def OCT2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, oct)
+#     return base_to_dec(parsed, oct)
 
 
-@xl.register()
-@xl.validate_args
-@handle_places
-@override_int_handling
-def OCT2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, oct)
-    return base_to_base(parsed, oct, hex)
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# @override_int_handling
+# def OCT2HEX(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, oct)
+#     return base_to_base(parsed, oct, hex)
 
 
-@xl.register()
-@xl.validate_args
-@handle_places
-def HEX2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, hex)
-    if 0x200 <= int(str(parsed), 16) < 0xfffffffe00:
-        raise xlerrors.NumExcelError
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# def HEX2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, hex)
+#     if 0x200 <= int(str(parsed), 16) < 0xfffffffe00:
+#         raise xlerrors.NumExcelError
     
-    return base_to_base(parsed, hex, bin)
+#     return base_to_base(parsed, hex, bin)
 
 
-@xl.register()
-@xl.validate_args
-@handle_places
-def HEX2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, hex)
-    if 0x20000000 <= int(str(parsed), 16) < 0xffe0000000:
-        raise xlerrors.NumExcelError
+# @xl.register()
+# @xl.validate_args
+# @handle_places
+# def HEX2OCT(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, hex)
+#     if 0x20000000 <= int(str(parsed), 16) < 0xffe0000000:
+#         raise xlerrors.NumExcelError
     
-    return base_to_base(parsed, hex, oct)
+#     return base_to_base(parsed, hex, oct)
 
 
-@xl.register()
-@xl.validate_args
-def HEX2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
-    number = number or "0"
-    parsed = parse_number(number, hex)
-    return base_to_dec(parsed, hex)
+# @xl.register()
+# @xl.validate_args
+# def HEX2DEC(number: func_xltypes.XlText) -> func_xltypes.XlText:
+#     number = number or "0"
+#     parsed = parse_number(number, hex)
+#     return base_to_dec(parsed, hex)
 
 
-# currently breaks with $A5 references
+# # currently breaks with $A5 references
