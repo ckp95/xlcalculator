@@ -13,7 +13,7 @@ from xlcalculator import xlerrors
 
 @pytest.fixture(scope="session")
 def excel_app():
-    app = xlwings.App(add_book=False, visible=False)
+    app = xlwings.App(add_book=False, visible=True)
     try:
         yield app
     finally:
@@ -92,16 +92,9 @@ class FormulaTestingEnvironment:
         else:
             return self.formula_cell.value
     
-    def set_args(self, **kwargs):        
+    def set_args(self, **kwargs):   
         for name, value in kwargs.items():
             self.args[name].value = value
-
-    
-# def SQRT(x):
-#     if x < 0:
-#         return xlerrors.NumExcelError("cannot be less than 0")
-    
-#     return sqrt(x)
 
 
 def formula_env(formula: Callable, argnames: Union[str, Sequence[str]]):
@@ -115,18 +108,3 @@ def formula_env(formula: Callable, argnames: Union[str, Sequence[str]]):
         )
     
     return env
-
-
-# sqrt_env = formula_env(SQRT, "x")
-
-# def test_sqrt_with_floats(sqrt_env):
-#     @given(value=floats(allow_nan=False, allow_infinity=False))
-#     @settings(max_examples=1000, deadline=None)
-#     def inner(value):
-#         result = SQRT(value)
-#         sqrt_env.set_args(x=value)
-#         expected = sqrt_env.value
-        
-#         assert_equivalent(result=result, expected=expected, normalize=isclose)
-    
-#     inner()
