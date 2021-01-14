@@ -331,7 +331,7 @@ class MathModuleTest(unittest.TestCase):
 
 
 @parametrize_cases(
-    Case(number=0, expected="0"),
+    Case(number=None, expected="0"),
     Case(number=512, expected=xlerrors.NumExcelError),
     Case(number=-513, expected=xlerrors.NumExcelError),
     Case(number=1, expected="1"),
@@ -352,3 +352,30 @@ def test_dec2bin(number, expected):
 )
 def test_dec2bin_with_places(number, places, expected):
     assert_equivalent(math.DEC2BIN(number, places), expected)
+
+
+@parametrize_cases(
+    Case(number=None, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=-1, expected="7777777777"),
+    Case(number=-2, expected="7777777776"),
+    Case(number=8, expected="10"),
+    Case(number=2**29, expected=xlerrors.NumExcelError),
+    Case(number=2**29-1, expected="3777777777"),
+    Case(number=-2**29-1, expected=xlerrors.NumExcelError),
+    Case(number=-2**29, expected="4000000000"),
+)
+def test_dec2oct(number, expected):
+    assert_equivalent(math.DEC2OCT(number), expected)
+
+
+@parametrize_cases(
+    Case(number=None, places=0, expected=xlerrors.NumExcelError),
+    Case(number=0, places=1, expected="0"),
+    Case(number=0, places=2, expected="00"),
+    Case(number=8, places=1, expected=xlerrors.NumExcelError),
+    Case(number=0, places=11, expected=xlerrors.NumExcelError),
+    Case(number=-1, places=1, expected="7777777777")
+)
+def test_dec2oct_with_places(number, places, expected):
+    assert_equivalent(math.DEC2OCT(number, places), expected)

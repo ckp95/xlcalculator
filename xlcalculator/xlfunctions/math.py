@@ -710,6 +710,10 @@ def unused(x):
     return x is UNUSED
 
 
+def used(x):
+    return x is not UNUSED
+
+
 @xl.register()
 @xl.validate_args
 def DEC2BIN(
@@ -720,7 +724,7 @@ def DEC2BIN(
         places = None
     else:
         places = int(places)
-        if not (0 < places <= 10):
+        if not (1 <= places <= 10):
             raise xlerrors.NumExcelError
     
     number = int(number)
@@ -742,6 +746,40 @@ def DEC2BIN(
     
     return string.zfill(desired_length)
 
+
+@xl.register()
+@xl.validate_args
+def DEC2OCT(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if unused(places):
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+    
+    number = int(number)
+    
+    if not (-2**29 <= number < 2**29):
+        raise xlerrors.NumExcelError
+    
+    bit_width = 30
+    negative = number < 0
+    
+    if negative:
+        number += (1 << bit_width)
+        
+    string = oct(number)[2:]
+    if places is None:
+        return string
+    
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
+        raise xlerrors.NumExcelError
+    
+    return string.zfill(desired_length)
 
 
 # Base = Literal[bin, oct, hex]
