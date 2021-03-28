@@ -6,10 +6,10 @@ from hypothesis.strategies import integers, floats, one_of, none, text
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC
+from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC, BIN2HEX
 
 
-MAX_EXAMPLES = 1000
+MAX_EXAMPLES = 10000
 
 
 def fuzz_scalars(env, variables, _settings=None):
@@ -150,3 +150,18 @@ def test_bin2dec(env_bin2dec):
 # ___2DEC functions do not take a `places` parameter
 
 
+env_bin2hex = formula_env(BIN2HEX, "number")
+
+
+def test_bin2hex(env_bin2hex):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            text(
+                alphabet=set("01"),
+                min_size=1,
+                max_size=11
+            ).filter(lambda x: x == "0" or x[0] != "0")
+        ) 
+    )
+    fuzz_scalars(env=env_bin2hex, variables=variables)

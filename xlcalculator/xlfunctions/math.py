@@ -906,6 +906,40 @@ def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
     
     value = int(as_str, 2)
     return (value & ~mask) - (value & mask)
+
+
+@xl.register()
+@xl.validate_args
+def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+    
+    number = int(number)
+    if not (0 <= number < 10000000000):
+        raise xlerrors.NumExcelError
+    
+    as_str = str(number)
+    permitted_digits = set("01")
+    if set(as_str) - permitted_digits:
+        raise xlerrors.NumExcelError
+    
+    value = int(as_str, 2)
+    
+    bin_width = 10
+    hex_width = 40
+    
+    mask = 1 << bin_width - 1
+    new_value = (value & ~mask) - (value & mask)
+    
+    if new_value < 0:
+        new_value += (1 << hex_width)
+    
+    
+    string = hex(new_value)[2:].upper()
+    
+    
+    return string
+    
     
 
 # Base = Literal[bin, oct, hex]
