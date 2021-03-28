@@ -2,11 +2,11 @@
 from contextlib import contextmanager
 import xlwings as xw
 from hypothesis import given, settings
-from hypothesis.strategies import integers, floats, one_of, none
+from hypothesis.strategies import integers, floats, one_of, none, text
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX
+from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT
 
 
 MAX_EXAMPLES = 1000
@@ -94,3 +94,37 @@ def test_dec2hex_with_places(env_dec2hex_places):
         places=xl_numbers(-5, 15)
     )
     fuzz_scalars(env=env_dec2hex_places, variables=variables)
+
+
+env_bin2oct = formula_env(BIN2OCT, "number")
+
+def test_bin2oct(env_bin2oct):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            text(
+                alphabet=set("01"),
+                min_size=1,
+                max_size=11
+            ).filter(lambda x: x == "0" or x[0] != "0")
+        ) 
+    )
+    fuzz_scalars(env=env_bin2oct, variables=variables)
+
+
+env_bin2oct_places = formula_env(BIN2OCT, ["number", "places"])
+
+
+def test_bin2oct_with_places(env_bin2oct_places):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            text(
+                alphabet=set("01"),
+                min_size=1,
+                max_size=11
+            ).filter(lambda x: x == "0" or x[0] != "0")
+        ),
+        places=xl_numbers(-5, 15)
+    )
+    fuzz_scalars(env=env_bin2oct_places, variables=variables)

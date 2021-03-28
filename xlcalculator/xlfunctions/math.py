@@ -829,6 +829,62 @@ def DEC2HEX(
     return string.zfill(places)
 
 
+@xl.register()
+@xl.validate_args
+def BIN2OCT(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if unused(places):
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+    
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+     
+    number = int(number)
+    if not (0 <= number < 10000000000):
+        raise xlerrors.NumExcelError
+    
+    as_str = str(number)
+    permitted_digits = set("01")
+    if set(as_str) - permitted_digits:
+        raise xlerrors.NumExcelError
+    
+    value = int(as_str, 2)
+    
+    bin_width = 10
+    oct_width = 30
+    
+    mask = 1 << bin_width - 1
+    
+    # I figured this out months ago and now I don't remember why it works
+    new_value = (value & ~mask) - (value & mask)
+    
+    if new_value < 0:
+        new_value += (1 << oct_width)
+        
+    # this doesn't have the `if new_value < 0 and new_value.bit_length() == 10 part`
+    # because I can't come up with a counterexample where it is needed, but I imagine when
+    # I come to refactor it can be put in the general case and not matter for BIN2OCT
+    
+    string = oct(new_value)[2:]
+    if places is None:
+        return string
+    
+    if places < len(string):
+        raise xlerrors.NumExcelError
+    
+    # we do not need to check for negative here because inputs can't be negative, but it
+    # wouldn't hurt either. will not be affected when this check is added for the general
+    # case
+    
+    return string.zfill(places)
+
+
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}
 
