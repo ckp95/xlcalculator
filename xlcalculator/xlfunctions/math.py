@@ -910,7 +910,19 @@ def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
 
 @xl.register()
 @xl.validate_args
-def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
+def BIN2HEX(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if unused(places):
+        places = None
+    else:
+        places = int(places)
+        # if not (1 <= places <= 10):
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+    
+    
     if not float(number).is_integer():
         raise xlerrors.NumExcelError
     
@@ -931,14 +943,25 @@ def BIN2HEX(number: func_xltypes.XlNumber) -> func_xltypes.XlText:
     mask = 1 << bin_width - 1
     new_value = (value & ~mask) - (value & mask)
     
-    if new_value < 0:
+    negative = new_value < 0
+    if negative:
         new_value += (1 << hex_width)
     
-    
     string = hex(new_value)[2:].upper()
+    if places is None:
+        return string
     
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
+        raise xlerrors.NumExcelError
     
-    return string
+    return string.zfill(places)
+
+
+# @xl.register()
+# @xl.validate_args
+# def OCT2BIN(number:func_xltypes.XlNumber) -> func_xltypes:
+#     pass
     
     
 

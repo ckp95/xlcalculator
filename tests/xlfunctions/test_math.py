@@ -460,3 +460,21 @@ def test_bin2dec(number, expected):
 )
 def test_bin2hex(number, expected):
     assert_equivalent(math.BIN2HEX(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, places=None, expected=xlerrors.NumExcelError),
+    Case(number=None, places=2, expected="00"),
+    Case(number=None, places=-1, expected=xlerrors.NumExcelError),
+    Case(number=None, places=11, expected=xlerrors.NumExcelError),
+    Case(number=None, places=10, expected="0000000000"),
+    Case(number=10000000, places=1, expected=xlerrors.NumExcelError),
+    Case(number=100000000, places=5, expected="00100"),
+    Case(number=100000000, places=1, expected=xlerrors.NumExcelError),
+    Case(number=1000000000, places=1, expected="FFFFFFFE00")
+)
+def test_bin2hex_with_places(number, places, expected):
+    assert_equivalent(math.BIN2HEX(number, places), expected)
+    
+
+# def test_oc2bin(number, expected):
