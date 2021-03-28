@@ -429,3 +429,18 @@ def test_bin2oct(number, expected):
 )
 def test_bin2oct_with_places(number, places, expected):
     assert_equivalent(math.BIN2OCT(number, places), expected)
+    
+    
+@parametrize_cases(
+    # yes, ___2DEC functions are meant to return numbers and not strings.
+    Case(number=None, expected=0),
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=2, expected=xlerrors.NumExcelError),
+    Case(number=10, expected=2),
+    Case(number=1.5, expected=xlerrors.NumExcelError),
+    Case(number=1000000000, expected=-512),
+    Case(number=1111111111, expected=-1),
+    Case(number=10000000000, expected=xlerrors.NumExcelError)
+)
+def test_bin2dec(number, expected):
+    assert_equivalent(math.BIN2DEC(number), expected)

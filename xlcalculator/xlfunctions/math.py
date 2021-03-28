@@ -846,7 +846,7 @@ def BIN2OCT(
         raise xlerrors.NumExcelError
      
     number = int(number)
-    if not (0 <= number < 10000000000):
+    if not (0 <= number < 10000000000): # could just check string length
         raise xlerrors.NumExcelError
     
     as_str = str(number)
@@ -884,6 +884,29 @@ def BIN2OCT(
     
     return string.zfill(places)
 
+ # the ___2DEC functions give a number not a string, and they do not take a `places`
+ # parameter
+@xl.register()
+@xl.validate_args
+def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+    
+    number = int(number)
+    if not (0 <= number < 10000000000):
+        raise xlerrors.NumExcelError
+
+    as_str = str(number)
+    
+    if set(as_str) - set("01"):
+        raise xlerrors.NumExcelError
+    
+    bit_width = 10
+    mask = 1 << bit_width - 1
+    
+    value = int(as_str, 2)
+    return (value & ~mask) - (value & mask)
+    
 
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}
