@@ -701,6 +701,18 @@ def TRUNC(
 
 
 class Unused:
+    """Some Excel formulae behave differently if you use a blank cell for one parameter vs
+    not using that parameter at all. For example:
+
+        =DEC2BIN(35)
+        =DEC2BIN(35, A1)
+
+    where A1 is a blank cell. The first will give "100011", the second gives a #NUM error.
+
+    So, we have to be careful when using `None` as a default parameter value in the Python
+    implementations. In cases where the distinction matters, use an instance of this
+    `UNUSED` class as a default, instead of `None`.
+    """
     pass
 
 
@@ -780,6 +792,41 @@ def DEC2OCT(
         raise xlerrors.NumExcelError
     
     return string.zfill(desired_length)
+
+
+@xl.register()
+@xl.validate_args
+def DEC2HEX(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if unused(places):
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+
+    number = int(number)
+    
+    if not (-2**39 <= number < 2**39):
+        raise xlerrors.NumExcelError
+    
+    bit_width = 40
+    negative = number < 0
+    
+    if negative:
+        number += (1 << bit_width)
+        
+    string = hex(number)[2:].upper()
+    if places is None:
+        return string
+    
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
+        raise xlerrors.NumExcelError
+    
+    return string.zfill(places)
 
 
 # Base = Literal[bin, oct, hex]

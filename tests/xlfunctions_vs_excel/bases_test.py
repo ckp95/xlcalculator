@@ -6,10 +6,10 @@ from hypothesis.strategies import integers, floats, one_of, none
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT
+from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX
 
 
-MAX_EXAMPLES = 10000
+MAX_EXAMPLES = 1000
 
 
 def fuzz_scalars(env, variables, _settings=None):
@@ -27,7 +27,7 @@ def fuzz_scalars(env, variables, _settings=None):
 
 def xl_numbers(min_value=None, max_value=None):
     return one_of(
-        none(),
+        none(),  # blank cell
         integers(min_value=min_value, max_value=max_value),
         floats(min_value=min_value, max_value=max_value, allow_infinity=False, allow_nan=False)
     )
@@ -72,3 +72,25 @@ def test_dec2oct_with_places(env_dec2oct_places):
         places=xl_numbers(-5, 15)
     )
     fuzz_scalars(env=env_dec2oct_places, variables=variables)
+
+
+
+env_dec2hex = formula_env(DEC2HEX, "number")
+
+
+def test_dec2hex(env_dec2hex):
+    lower, upper = -2**39, 2**39
+    variables = given(number=one_of(xl_numbers(), near(lower), near(upper)))
+    fuzz_scalars(env=env_dec2hex, variables=variables)
+    
+
+env_dec2hex_places = formula_env(DEC2HEX, ["number", "places"])
+
+
+def test_dec2hex_with_places(env_dec2hex_places):
+    lower, upper = -2**39, 2**39
+    variables = given(
+        number=xl_numbers(lower-5, upper+5),
+        places=xl_numbers(-5, 15)
+    )
+    fuzz_scalars(env=env_dec2hex_places, variables=variables)
