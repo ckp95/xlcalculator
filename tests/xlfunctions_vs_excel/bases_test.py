@@ -94,20 +94,21 @@ def test_dec2hex_with_places(env_dec2hex_places):
         places=xl_numbers(-5, 15)
     )
     fuzz_scalars(env=env_dec2hex_places, variables=variables)
+    
+
+def binary_numbers_as_strings():
+    return text(
+        alphabet=set("01"),
+        min_size=1,
+        max_size=11
+    ).filter(lambda x: x == "0" or x[0] != "0")
 
 
 env_bin2oct = formula_env(BIN2OCT, "number")
 
 def test_bin2oct(env_bin2oct):
     variables = given(
-        number=one_of(
-            xl_numbers(),
-            text(
-                alphabet=set("01"),
-                min_size=1,
-                max_size=11
-            ).filter(lambda x: x == "0" or x[0] != "0")
-        ) 
+        number=one_of(xl_numbers(), binary_numbers_as_strings()) 
     )
     fuzz_scalars(env=env_bin2oct, variables=variables)
 
@@ -117,14 +118,7 @@ env_bin2oct_places = formula_env(BIN2OCT, ["number", "places"])
 
 def test_bin2oct_with_places(env_bin2oct_places):
     variables = given(
-        number=one_of(
-            xl_numbers(),
-            text(
-                alphabet=set("01"),
-                min_size=1,
-                max_size=11
-            ).filter(lambda x: x == "0" or x[0] != "0")
-        ),
+        number=one_of(xl_numbers(), binary_numbers_as_strings()),
         places=xl_numbers(-5, 15)
     )
     fuzz_scalars(env=env_bin2oct_places, variables=variables)
@@ -135,14 +129,7 @@ env_bin2dec = formula_env(BIN2DEC, "number")
 
 def test_bin2dec(env_bin2dec):
     variables = given(
-        number=one_of(
-            xl_numbers(),
-            text(
-                alphabet=set("01"),
-                min_size=1,
-                max_size=11
-            ).filter(lambda x: x == "0" or x[0] != "0")
-        ) 
+        number=one_of(xl_numbers(), binary_numbers_as_strings()) 
     )
     fuzz_scalars(env=env_bin2dec, variables=variables)
     
@@ -155,13 +142,6 @@ env_bin2hex = formula_env(BIN2HEX, "number")
 
 def test_bin2hex(env_bin2hex):
     variables = given(
-        number=one_of(
-            xl_numbers(),
-            text(
-                alphabet=set("01"),
-                min_size=1,
-                max_size=11
-            ).filter(lambda x: x == "0" or x[0] != "0")
-        ) 
+        number=one_of(xl_numbers(), binary_numbers_as_strings()) 
     )
     fuzz_scalars(env=env_bin2hex, variables=variables)
