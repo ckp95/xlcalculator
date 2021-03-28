@@ -42,6 +42,28 @@ error_lookup = {
 
 @dataclass
 class FormulaTestingEnvironment:
+    """Given an xlwings workbook, a function, and the names of the arguments of that
+    function, initializes cells on the workbook so that the function can be tested against
+    its Excel formula equivalent.
+
+    For example,
+
+    >>> env = FormulaTestingEnvironment(
+    ...     wb=<some blank workbook>, formula=DEC2BIN, argnames=["number", "places"]
+    ... )
+
+    We can then set the "number" argument via the `set_args` method:
+
+    >>> env.set_args(number=123, places=9)
+
+    And get the formula result back from the live Excel workbook:
+
+    >>> env.value
+    '001111011'
+
+    At the moment, it supports only single-cell, named arguments.
+    """
+    
     wb: xlwings.main.Book
     formula: Callable
     argnames: Sequence[str]
@@ -98,13 +120,17 @@ class FormulaTestingEnvironment:
 
 
 def formula_env(formula: Callable, argnames: Union[str, Sequence[str]]):
+    """Parametrized fixture that creates a FormulaTestingEnvironment from a function and
+    argument names. The workbook is provided by the `excel_workbook` fixture.
+    """
+
     if isinstance(argnames, str):
         argnames = [argnames]
-    
+
     @pytest.fixture
     def env(excel_workbook):
         return FormulaTestingEnvironment(
             wb=excel_workbook, formula=formula, argnames=argnames
         )
-    
+
     return env
