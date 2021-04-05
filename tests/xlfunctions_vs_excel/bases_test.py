@@ -6,7 +6,7 @@ from hypothesis.strategies import integers, floats, one_of, none, text
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC, BIN2HEX, OCT2BIN
+from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC, BIN2HEX, OCT2BIN, OCT2DEC
 
 
 MAX_EXAMPLES = 1000
@@ -158,11 +158,11 @@ def test_bin2hex_with_places(env_bin2hex_places):
     fuzz_scalars(env=env_bin2hex_places, variables=variables)
 
 
-def octal_numbers_as_strings():
+def octal_numbers_as_strings(max_size):
     return text(
         alphabet=set("01234567"),
         min_size=1,
-        max_size=4
+        max_size=max_size
     ).filter(lambda x: x == "0" or x[0] != "0")
 
 
@@ -171,7 +171,7 @@ env_oct2bin = formula_env(OCT2BIN, "number")
 
 def test_oct2bin(env_oct2bin):
     variables = given(
-        number=one_of(xl_numbers(), octal_numbers_as_strings()) 
+        number=one_of(xl_numbers(), octal_numbers_as_strings(4)) 
     )
     fuzz_scalars(env=env_oct2bin, variables=variables)
     
@@ -181,7 +181,18 @@ env_oct2bin_places = formula_env(OCT2BIN, ["number", "places"])
 
 def test_oct2bin_with_places(env_oct2bin_places):
     variables = given(
-        number=one_of(xl_numbers(), octal_numbers_as_strings()),
+        number=one_of(xl_numbers(), octal_numbers_as_strings(4)),
         places=xl_numbers(-5, 15)
     )
     fuzz_scalars(env=env_oct2bin_places, variables=variables)
+    
+
+env_oct2dec = formula_env(OCT2DEC, "number")
+
+def test_oct2dec(env_oct2dec):
+    variables = given(
+        number=one_of(
+            # xl_numbers(),
+            octal_numbers_as_strings(11))
+    )
+    fuzz_scalars(env=env_oct2dec, variables=variables)

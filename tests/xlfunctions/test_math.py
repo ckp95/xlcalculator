@@ -501,10 +501,24 @@ def test_oc2bin(number, expected):
 )
 def test_oct2bin_with_places(number, places, expected):
     assert_equivalent(math.OCT2BIN(number, places), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, expected=0),
+    Case(number=1, expected=1),
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=8, expected=xlerrors.NumExcelError),
+    Case(number=10, expected=8),
+    Case(number=0.5, expected=xlerrors.NumExcelError),
+    Case(number=3777777777, expected=536870911),
+    Case(number=4000000000, expected=-536870912),
+    Case(number=10000000000, expected=xlerrors.NumExcelError),
+    Case(number=7777777777, expected=-1)
+)
+def test_oct2dec(number, expected):
+    assert_equivalent(math.OCT2DEC(number), expected)
 
 # todo:
-# oct2bin
-# oct2dec
 # oct2hex
 # hex2bin
 # hex2oct

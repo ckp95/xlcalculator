@@ -995,6 +995,32 @@ def OCT2BIN(
     return string.zfill(places)
     
     
+@xl.register()
+@xl.validate_args
+def OCT2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+    
+    if number < 0:
+        raise xlerrors.NumExcelError
+    
+    number = int(number)
+    
+    as_str = str(number)
+    permitted_digits = set("01234567")
+    if set(as_str) - permitted_digits:
+        raise xlerrors.NumExcelError
+    
+    value = int(as_str, 8)
+    if not (0 <= value < 2**30):
+        raise xlerrors.NumExcelError
+    
+    bit_width = 30
+    mask = 1 << bit_width - 1
+    
+    return (value & ~mask) - (value & mask)
+
+
 
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}
