@@ -9,6 +9,7 @@ import pandas as pd
 from scipy.special import factorial2
 
 from . import xl, xlerrors, xlcriteria, func_xltypes
+from .xlerrors import NumExcelError
 
 # Testing Hook
 rand = np.random.rand
@@ -68,7 +69,7 @@ def ASIN(
         asin-function-81fb95e5-6d6f-48c4-bc45-58f955c6d347
     """
     if number < -1 or number > 1:
-        raise xlerrors.NumExcelError(f'number {number} must be less than '
+        raise NumExcelError(f'number {number} must be less than '
                                      f'or equal to -1 or greater ot equal '
                                      f'to 1')
 
@@ -133,7 +134,7 @@ def CEILING(
         return 0
 
     if significance < 0 < number:
-        raise xlerrors.NumExcelError('significance below zero and number \
+        raise NumExcelError('significance below zero and number \
                                       above zero is not allowed')
 
     number = float(number)
@@ -254,7 +255,7 @@ def FACT(
         fact-function-ca8588c2-15f2-41c0-8e8c-c11bd471a4f3
     """
     if number < 0:
-        raise xlerrors.NumExcelError('Negative values are not allowed')
+        raise NumExcelError('Negative values are not allowed')
 
     return math.factorial(int(number))
 
@@ -270,7 +271,7 @@ def FACTDOUBLE(
         factdouble-function-e67697ac-d214-48eb-b7b7-cce2589ecac8
     """
     if number < 0:
-        raise xlerrors.NumExcelError('Negative values are not allowed')
+        raise NumExcelError('Negative values are not allowed')
 
     return factorial2(int(number), exact=True)
 
@@ -289,7 +290,7 @@ def FLOOR(
     """
 
     if significance < 0 < number:
-        raise xlerrors.NumExcelError('number and significance needto have \
+        raise NumExcelError('number and significance needto have \
                                       the same sign')
     if number == 0:
         return 0
@@ -523,7 +524,7 @@ def SQRT(
         sqrt-function-654975c2-05c4-4831-9a24-2c65e4040fdf
     """
     if number < 0:
-        raise xlerrors.NumExcelError(f'number {number} must be non-negative')
+        raise NumExcelError(f'number {number} must be non-negative')
 
     return math.sqrt(number)
 
@@ -539,7 +540,7 @@ def SQRTPI(
         sqrtpi-function-1fb4e63f-9b51-46d6-ad68-b3e7a8b519b4
     """
     if number < 0:
-        raise xlerrors.NumExcelError(f'number {number} must be non-negative')
+        raise NumExcelError(f'number {number} must be non-negative')
 
     return math.sqrt(number * math.pi)
 
@@ -737,11 +738,11 @@ def DEC2BIN(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
     
     number = int(number)
     if not (-513 < number < 512):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     negative = number < 0
     bit_width = 10
@@ -754,7 +755,7 @@ def DEC2BIN(
     
     desired_length = len(string) if negative else places
     if desired_length < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(desired_length)
 
@@ -770,12 +771,12 @@ def DEC2OCT(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
     
     number = int(number)
     
     if not (-2**29 <= number < 2**29):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     bit_width = 30
     negative = number < 0
@@ -789,7 +790,7 @@ def DEC2OCT(
     
     desired_length = len(string) if negative else places
     if desired_length < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(desired_length)
 
@@ -805,12 +806,12 @@ def DEC2HEX(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
 
     number = int(number)
     
     if not (-2**39 <= number < 2**39):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     bit_width = 40
     negative = number < 0
@@ -824,7 +825,7 @@ def DEC2HEX(
     
     desired_length = len(string) if negative else places
     if desired_length < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(places)
 
@@ -840,19 +841,19 @@ def BIN2OCT(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
     
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
      
     number = int(number)
     if not (0 <= number < 10000000000): # could just check string length
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     as_str = str(number)
     permitted_digits = set("01")
     if set(as_str) - permitted_digits:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     value = int(as_str, 2)
     
@@ -876,7 +877,7 @@ def BIN2OCT(
         return string
     
     if places < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     # we do not need to check for negative here because inputs can't be negative, but it
     # wouldn't hurt either. will not be affected when this check is added for the general
@@ -890,16 +891,16 @@ def BIN2OCT(
 @xl.validate_args
 def BIN2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     number = int(number)
     if not (0 <= number < 10000000000):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
 
     as_str = str(number)
     
     if set(as_str) - set("01"):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     bit_width = 10
     mask = 1 << bit_width - 1
@@ -919,20 +920,20 @@ def BIN2HEX(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
     
     
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     number = int(number)
     if not (0 <= number < 10000000000):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     as_str = str(number)
     permitted_digits = set("01")
     if set(as_str) - permitted_digits:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     value = int(as_str, 2)
     
@@ -952,7 +953,7 @@ def BIN2HEX(
     
     desired_length = len(string) if negative else places
     if desired_length < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(places)
 
@@ -968,29 +969,29 @@ def OCT2BIN(
     else:
         places = int(places)
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
         
     
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
       
     number = int(number)
     
     as_str = str(number)
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     value = int(as_str, 8)
     if not (0 <= value < 512):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     string = bin(value)[2:]
     if places is None:
         return string
     
     if len(string) > places:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(places)
     
@@ -999,21 +1000,21 @@ def OCT2BIN(
 @xl.validate_args
 def OCT2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     if number < 0:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     number = int(number)
     
     as_str = str(number)
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     value = int(as_str, 8)
     if not (0 <= value < 2**30):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     bit_width = 30
     mask = 1 << bit_width - 1
@@ -1032,24 +1033,24 @@ def OCT2HEX(
         places = int(places)
         # if not (1 <= places <= 10):
         if not (1 <= places <= 10):
-            raise xlerrors.NumExcelError
+            raise NumExcelError
     
     if not float(number).is_integer():
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     if number < 0:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     number = int(number)
     as_str = str(number)
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     value = int(as_str, 8)
     
     if value >= 2**30: # doublecheck later
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     oct_width = 30
     hex_width = 40
@@ -1067,7 +1068,7 @@ def OCT2HEX(
     
     desired_length = len(string) if negative else places
     if desired_length < len(string):
-        raise xlerrors.NumExcelError
+        raise NumExcelError
     
     return string.zfill(desired_length)
 
@@ -1101,7 +1102,7 @@ def OCT2HEX(
 #         if places is not None:
 #             places = int(places)
 #             if not (1 <= places <= 10):
-#                 raise xlerrors.NumExcelError(f"Places must be between 1 and 10; got {places}")
+#                 raise NumExcelError(f"Places must be between 1 and 10; got {places}")
         
 #         result = func(number)
         
@@ -1110,7 +1111,7 @@ def OCT2HEX(
 #             return result
         
 #         if places < len(result):
-#             raise xlerrors.NumExcelError(f"{places} places is not enough to represent {result}")
+#             raise NumExcelError(f"{places} places is not enough to represent {result}")
         
 #         return result.zfill(places)
     
@@ -1124,7 +1125,7 @@ def OCT2HEX(
 #         try:
 #             int(number)
 #         except xlerrors.ValueExcelError as e:
-#             raise xlerrors.NumExcelError from e
+#             raise NumExcelError from e
         
 #         return func(number)
     
@@ -1147,11 +1148,11 @@ def OCT2HEX(
 #     as_str = str(number)
     
 #     if len(as_str) > 10:
-#         raise xlerrors.NumExcelError(f"Input must not have more than 10 hex digits; got {len(as_str)}")
+#         raise NumExcelError(f"Input must not have more than 10 hex digits; got {len(as_str)}")
     
 #     digits = {bin: "01", oct: "01234567", hex: "0123456789ABCDEF"}[base]
 #     if set(as_str.upper()) - set(digits):
-#         raise xlerrors.NumExcelError(f"Input must be positive and only contain digits {digits}; got {as_str}")
+#         raise NumExcelError(f"Input must be positive and only contain digits {digits}; got {as_str}")
     
 #     return as_str
 
@@ -1192,7 +1193,7 @@ def OCT2HEX(
 #     number = number or "0"
 #     number = int(number) + 1
 #     if not (-2**9 <= number < 2**9):
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     return dec_to_base(number, bin)
 
@@ -1204,7 +1205,7 @@ def OCT2HEX(
 #     number = number or "0"
 #     number = int(number)
 #     if not (-2**29 <= number < 2**29):
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     return dec_to_base(number, oct)
 
@@ -1218,7 +1219,7 @@ def OCT2HEX(
 #     # Note: in LibreOffice Calc the bounds may be different; see
 #     # https://bugs.documentfoundation.org/show_bug.cgi?id=139173
 #     if not (-2**39 <= number < 2**39):
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     return dec_to_base(number, hex)
             
@@ -1230,7 +1231,7 @@ def OCT2HEX(
 # def OCT2BIN(number: func_xltypes.XlText) -> func_xltypes.XlText:    
 #     number = number or "0"
 #     if 1000 <= int(number) < 7777777000:
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     parsed = parse_number(number, oct)
 #     return base_to_base(parsed, oct, bin)
@@ -1262,7 +1263,7 @@ def OCT2HEX(
 #     number = number or "0"
 #     parsed = parse_number(number, hex)
 #     if 0x200 <= int(str(parsed), 16) < 0xfffffffe00:
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     return base_to_base(parsed, hex, bin)
 
@@ -1274,7 +1275,7 @@ def OCT2HEX(
 #     number = number or "0"
 #     parsed = parse_number(number, hex)
 #     if 0x20000000 <= int(str(parsed), 16) < 0xffe0000000:
-#         raise xlerrors.NumExcelError
+#         raise NumExcelError
     
 #     return base_to_base(parsed, hex, oct)
 
