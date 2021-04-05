@@ -477,4 +477,35 @@ def test_bin2hex_with_places(number, places, expected):
     assert_equivalent(math.BIN2HEX(number, places), expected)
     
 
-# def test_oc2bin(number, expected):
+@parametrize_cases(
+    Case(number=None, expected="0"),
+    Case(number=1, expected="1"),
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=2, expected="10"),
+    Case(number=68, expected=xlerrors.NumExcelError),
+    Case(number=1000, expected=xlerrors.NumExcelError),
+    Case(number=777, expected="111111111"),
+    Case(number=0.5, expected=xlerrors.NumExcelError)
+)
+def test_oc2bin(number, expected):
+    assert_equivalent(math.OCT2BIN(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, places=None, expected=xlerrors.NumExcelError),
+    Case(number=None, places=-1, expected=xlerrors.NumExcelError),
+    Case(number=None, places=2, expected="00"),
+    Case(number=2, places=1, expected=xlerrors.NumExcelError),
+    Case(number=None, places=11, expected=xlerrors.NumExcelError),
+    Case(number=None, places=10, expected="0000000000")
+)
+def test_oct2bin_with_places(number, places, expected):
+    assert_equivalent(math.OCT2BIN(number, places), expected)
+
+# todo:
+# oct2bin
+# oct2dec
+# oct2hex
+# hex2bin
+# hex2oct
+# hex2dec

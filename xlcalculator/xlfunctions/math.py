@@ -918,7 +918,6 @@ def BIN2HEX(
         places = None
     else:
         places = int(places)
-        # if not (1 <= places <= 10):
         if not (1 <= places <= 10):
             raise xlerrors.NumExcelError
     
@@ -958,10 +957,42 @@ def BIN2HEX(
     return string.zfill(places)
 
 
-# @xl.register()
-# @xl.validate_args
-# def OCT2BIN(number:func_xltypes.XlNumber) -> func_xltypes:
-#     pass
+@xl.register()
+@xl.validate_args
+def OCT2BIN(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if places is UNUSED:
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+        
+    
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+      
+    number = int(number)
+    
+    as_str = str(number)
+    permitted_digits = set("01234567")
+    if set(as_str) - permitted_digits:
+        raise xlerrors.NumExcelError
+    
+    value = int(as_str, 8)
+    if not (0 <= value < 512):
+        raise xlerrors.NumExcelError
+    
+    string = bin(value)[2:]
+    if places is None:
+        return string
+    
+    if len(string) > places:
+        raise xlerrors.NumExcelError
+    
+    return string.zfill(places)
     
     
 
