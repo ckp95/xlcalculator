@@ -1073,6 +1073,42 @@ def OCT2HEX(
     return string.zfill(desired_length)
 
 
+@xl.register()
+@xl.validate_args
+def HEX2BIN(
+    number: func_xltypes.XlText,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if places is UNUSED:
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise NumExcelError
+    
+    as_str = str(number) if number else "0"
+    
+    try:
+        value = int(as_str, 16)
+    except ValueError:
+        as_float = float(number)
+        if not as_float.is_integer():
+            raise NumExcelError
+        value = int(str(int(as_float)), 16) # oh dear
+    
+    if not (0 <= value < 512):
+        raise NumExcelError
+    
+    string = bin(value)[2:]
+    
+    if places is None:
+        return string
+    
+    if len(string) > places:
+        raise NumExcelError
+    
+    return string.zfill(places)
+
 
 # todo: from xlerrors import NumExcelError
 

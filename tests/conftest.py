@@ -116,6 +116,8 @@ class FormulaTestingEnvironment:
     
     def set_args(self, **kwargs):   
         for name, value in kwargs.items():
+            if isinstance(value, str):
+                value = "'" + value # prevent 1e3 being interpreted as scientific notation
             self.args[name].value = value
 
 
