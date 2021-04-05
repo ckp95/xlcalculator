@@ -6,7 +6,7 @@ from hypothesis.strategies import integers, floats, one_of, none, text
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC, BIN2HEX, OCT2BIN, OCT2DEC
+from xlcalculator.xlfunctions.math import DEC2BIN, DEC2OCT, DEC2HEX, BIN2OCT, BIN2DEC, BIN2HEX, OCT2BIN, OCT2DEC, OCT2HEX
 
 
 MAX_EXAMPLES = 1000
@@ -192,7 +192,32 @@ env_oct2dec = formula_env(OCT2DEC, "number")
 def test_oct2dec(env_oct2dec):
     variables = given(
         number=one_of(
-            # xl_numbers(),
-            octal_numbers_as_strings(11))
+            xl_numbers(),
+            octal_numbers_as_strings(11)
+        )
     )
     fuzz_scalars(env=env_oct2dec, variables=variables)
+    
+
+env_oct2hex = formula_env(OCT2HEX, "number")
+
+def test_oct2hex(env_oct2hex):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            octal_numbers_as_strings(11)
+        )
+    )
+    fuzz_scalars(env=env_oct2hex, variables=variables)
+    
+    
+env_oct2hex_places = formula_env(OCT2HEX, ["number", "places"])
+
+def test_oct2hex_with_places(env_oct2hex_places):
+    variables = given(
+        number=one_of(xl_numbers(), octal_numbers_as_strings(11)),
+        places=xl_numbers(-5, 15)
+    )
+    fuzz_scalars(env=env_oct2hex_places, variables=variables)
+    
+# todo: put max parameter on the binary strings too

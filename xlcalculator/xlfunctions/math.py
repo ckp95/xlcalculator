@@ -1020,7 +1020,60 @@ def OCT2DEC(number: func_xltypes.XlNumber) -> func_xltypes.XlNumber:
     
     return (value & ~mask) - (value & mask)
 
+@xl.register()
+@xl.validate_args
+def OCT2HEX(
+    number: func_xltypes.XlNumber,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:
+    if places is UNUSED:
+        places = None
+    else:
+        places = int(places)
+        # if not (1 <= places <= 10):
+        if not (1 <= places <= 10):
+            raise xlerrors.NumExcelError
+    
+    if not float(number).is_integer():
+        raise xlerrors.NumExcelError
+    
+    if number < 0:
+        raise xlerrors.NumExcelError
+    
+    number = int(number)
+    as_str = str(number)
+    permitted_digits = set("01234567")
+    if set(as_str) - permitted_digits:
+        raise xlerrors.NumExcelError
+    
+    value = int(as_str, 8)
+    
+    if value >= 2**30: # doublecheck later
+        raise xlerrors.NumExcelError
+    
+    oct_width = 30
+    hex_width = 40
+    
+    mask = 1 << oct_width - 1
+    new_value = (value & ~mask) - (value & mask)
+    
+    negative = new_value < 0
+    if negative:
+        new_value += (1 << hex_width)
+    
+    string = hex(new_value)[2:].upper()
+    if places is None:
+        return string
+    
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
+        raise xlerrors.NumExcelError
+    
+    return string.zfill(desired_length)
 
+
+
+# todo: from xlerrors import NumExcelError
 
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}

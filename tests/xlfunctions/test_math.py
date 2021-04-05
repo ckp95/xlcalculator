@@ -517,9 +517,37 @@ def test_oct2bin_with_places(number, places, expected):
 )
 def test_oct2dec(number, expected):
     assert_equivalent(math.OCT2DEC(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, expected="0"),
+    Case(number=-1, expected=xlerrors.NumExcelError),
+    Case(number=1, expected="1"),
+    Case(number=8, expected=xlerrors.NumExcelError),
+    Case(number=10, expected="8"),
+    Case(number=10000000000, expected=xlerrors.NumExcelError),
+    Case(number=7777777777, expected="FFFFFFFFFF"),
+    Case(number=12, expected="A"),
+    Case(number=1.5, expected=xlerrors.NumExcelError),
+    Case(number=4000000000, expected="FFE0000000")
+)
+def test_oct2hex(number, expected):
+    assert_equivalent(math.OCT2HEX(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, places=None, expected=xlerrors.NumExcelError),
+    Case(number=None, places=2, expected="00"),
+    Case(number=None, places=-1, expected=xlerrors.NumExcelError),
+    Case(number=None, places=11, expected=xlerrors.NumExcelError),
+    Case(number=None, places=10, expected="0000000000"),
+    Case(number=20, places=1, expected=xlerrors.NumExcelError),
+    Case(number=4000000000, places=1, expected="FFE0000000")
+)
+def test_oct2hex_with_places(number, places, expected):
+    assert_equivalent(math.OCT2HEX(number, places), expected)
 
 # todo:
-# oct2hex
 # hex2bin
 # hex2oct
 # hex2dec
