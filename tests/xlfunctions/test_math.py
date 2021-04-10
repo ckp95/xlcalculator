@@ -582,18 +582,38 @@ def test_hex2bin(number, expected):
 def test_hex2bin_with_places(number, places, expected):
     assert_equivalent(math.HEX2BIN(number, places), expected)
 
+
+@parametrize_cases(
+    Case(number=None, expected="0"),
+    Case(number=0.0, expected="0"),
+    Case(number=0.5, expected=NumExcelError),
+    Case(number=1, expected="1"),
+    Case(number=-1, expected=NumExcelError),
+    Case(number=8, expected="10"),
+    Case(number=10, expected="20"),
+    Case(number="A", expected="12"),
+    Case(number="1e3", expected="743"),
+    Case(number=20000000, expected=NumExcelError),
+    Case(number="1FFFFFFF", expected="3777777777"),
+    Case(number="FFDFFFFFFF", expected=NumExcelError),
+    Case(number="Ffe0000000", expected="4000000000")
+)
+def test_hex2oct(number, expected):
+    assert_equivalent(math.HEX2OCT(number), expected)
+    
+
+@parametrize_cases(
+    Case(number=None, places=None, expected=NumExcelError),
+    Case(number=None, places=2, expected="00"),
+    Case(number=None, places=-1, expected=NumExcelError),
+    Case(number=8, places=1, expected=NumExcelError),
+    Case(number=None, places=11, expected=NumExcelError),
+    Case(number=None, places=10, expected="0000000000"),
+    Case(number="FFFFFFFE00", places=1, expected="7777777000")
+)
+def test_hex2oct_with_places(number, places, expected):
+    assert_equivalent(math.HEX2OCT(number, places), expected)
+
 # todo:
 # hex2oct
 # hex2dec
-
-# have missed out the higher cases of oct2bin
-# need to test that oct2bin and bin2oct are opposites:
-# hypothesis is useful here since otherwise it will never
-# find those obscure cases in the high digits
-# ie. check that for all binary-strings val,
-# val == OCT2BIN(BIN2OCT(val))
-# and likewise for the octal strings val,
-# val == BIN2OCT(OCT2BIN(val))
-
-# likewise have missed the awkward higher cases for hex2bin
-# need to do the opposites-check for all of the pairs

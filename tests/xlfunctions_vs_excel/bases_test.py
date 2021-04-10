@@ -16,11 +16,12 @@ from xlcalculator.xlfunctions.math import (
     OCT2BIN,
     OCT2DEC,
     OCT2HEX,
-    HEX2BIN
+    HEX2BIN,
+    HEX2OCT
 )
 
 
-MAX_EXAMPLES = 1000
+MAX_EXAMPLES = 5000
 
 
 def fuzz_scalars(env, variables, _settings=None):
@@ -260,6 +261,29 @@ def test_hex2bin_with_places(env_hex2bin_places):
     )
     fuzz_scalars(env=env_hex2bin_places, variables=variables)
     
+    
+env_hex2oct = formula_env(HEX2OCT, "number")
+
+def test_hex2oct(env_hex2oct):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            hex_numbers_as_strings(11)
+        )
+    )
+    fuzz_scalars(env=env_hex2oct, variables=variables)
+
+
+env_hex2oct_places = formula_env(HEX2OCT, ["number", "places"])
+
+
+def test_hex2oct_with_places(env_hex2oct_places):
+    variables = given(
+        number=one_of(xl_numbers(), hex_numbers_as_strings(11)),
+        places=xl_numbers(-5, 15)
+    )
+    fuzz_scalars(env=env_hex2oct_places, variables=variables)
+    
 
 def to_bin(x):
     return bin(x)[2:]
@@ -304,24 +328,17 @@ def test_oct2dec_and_dec2oct_are_inverses(octal_string):
     assert octal_string == DEC2OCT(OCT2DEC(octal_string))
 
 
+@given(octal_string=integers(min_value=0).map(to_oct).filter(ten_chars_or_fewer))
+@settings(max_examples=MAX_EXAMPLES)
+def test_oct2hex_and_hex2oct_are_inverses(octal_string):
+    assert octal_string == HEX2OCT(OCT2HEX(octal_string))
+
+
 # need to do:
 # bin2oct-oct2bin (done)
 # dec2bin-bin2dec (done)
 # hex2bin-bin2hex (done)
 # dec2oct-oct2dec (done)
-# oct2hex-hex2oct
+# oct2hex-hex2oct (done)
 # hex2dec-dec2hex
-    
 
-# env_hex2oct = formula_env(HEX2OCT, "number")
-
-# def test_hex2oct(env_hex2oct):
-#     variables = given(
-#         number=one_of(
-#             xl_numbers(),
-#             hex_numbers_as_strings(3)
-#         )
-#     )
-#     fuzz_scalars(env=env_hex2bin, variables=variables)
-
-# # todo: put max parameter on the binary strings too

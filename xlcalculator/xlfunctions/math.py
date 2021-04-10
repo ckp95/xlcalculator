@@ -1131,7 +1131,55 @@ def HEX2BIN(
     return string.zfill(places)
 
 
-# todo: from xlerrors import NumExcelError
+@xl.register()
+@xl.validate_args
+def HEX2OCT(
+    number: func_xltypes.XlAnything,
+    places: func_xltypes.XlNumber = UNUSED
+) -> func_xltypes.XlText:    
+    if places is UNUSED:
+        places = None
+    else:
+        places = int(places)
+        if not (1 <= places <= 10):
+            raise NumExcelError
+    
+    if isinstance(number, func_xltypes.Blank):
+        as_str = "0"
+    
+    elif isinstance(number, func_xltypes.Number):
+        if number.is_decimal and not number.value.is_integer():
+            raise NumExcelError
+        as_str = str(int(number))
+        
+    elif isinstance(number, func_xltypes.Text):
+        as_str = str(number)
+    
+    value = int(as_str, 16)
+       
+    hex_width = 40
+    oct_width = 30
+    
+    mask = 1 << hex_width - 1
+    new_value = (value & ~mask) - (value & mask)
+    
+    if not (-2**29 <= new_value < 2**29):
+        raise NumExcelError
+    
+    negative = new_value < 0
+    if negative:
+        new_value += (1 << oct_width)
+    
+    string = oct(new_value)[2:]
+    if places is None:
+        return string
+    
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
+        raise NumExcelError
+    
+    return string.zfill(places)
+
 
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}
