@@ -1181,6 +1181,34 @@ def HEX2OCT(
     return string.zfill(places)
 
 
+@xl.register()
+@xl.validate_args
+def HEX2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
+    if not number: # covers Blank and empty string
+        as_str = "0"
+        
+    elif isinstance(number, func_xltypes.Text):
+        as_str = str(number)
+        
+    elif isinstance(number, func_xltypes.Number):
+        if number.is_decimal and not number.value.is_integer():
+            raise NumExcelError
+        as_str = str(int(number))
+        
+    permitted_digits = set("0123456789ABCDEFabcdef")
+    if set(as_str) - permitted_digits:
+        raise NumExcelError
+    
+    value = int(as_str, 16)
+    if not (0 <= value < 2**40):
+        raise NumExcelError
+    
+    bit_width = 40
+    mask = 1 << bit_width - 1
+    
+    return (value & ~mask) - (value & mask)
+
+
 # Base = Literal[bin, oct, hex]
 # bit_widths = {bin: 10, oct: 30, hex: 40}
 

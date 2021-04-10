@@ -614,6 +614,25 @@ def test_hex2oct(number, expected):
 def test_hex2oct_with_places(number, places, expected):
     assert_equivalent(math.HEX2OCT(number, places), expected)
 
-# todo:
-# hex2oct
-# hex2dec
+
+@parametrize_cases(
+    Case(number="nonsense", expected=NumExcelError),
+    Case(number=None, expected=0),
+    Case(number="0", expected=0),
+    Case(number=0.0, expected=0),
+    Case(number="", expected=0),
+    Case(number="0.0", expected=NumExcelError),
+    Case(number=1, expected=1),
+    Case(number=-1, expected=NumExcelError),
+    Case(number=10, expected=16),
+    Case(number=10000000000, expected=NumExcelError),
+    Case(number="FFFFffffff", expected=-1),
+    Case(number=8000000000, expected=-549755813888)   
+)
+def test_hex2dec(number, expected):
+    assert_equivalent(math.HEX2DEC(number), expected)
+
+
+# test for nonsense strings as input
+
+# stupid True literal/reference thing ...

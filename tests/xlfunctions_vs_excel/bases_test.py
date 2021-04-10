@@ -17,7 +17,8 @@ from xlcalculator.xlfunctions.math import (
     OCT2DEC,
     OCT2HEX,
     HEX2BIN,
-    HEX2OCT
+    HEX2OCT,
+    HEX2DEC
 )
 
 
@@ -284,6 +285,18 @@ def test_hex2oct_with_places(env_hex2oct_places):
     )
     fuzz_scalars(env=env_hex2oct_places, variables=variables)
     
+    
+env_hex2dec = formula_env(HEX2DEC, "number")
+
+def test_hex2dec(env_hex2dec):
+    variables = given(
+        number=one_of(
+            xl_numbers(),
+            hex_numbers_as_strings(11)
+        )
+    )
+    fuzz_scalars(env=env_hex2dec, variables=variables)
+    
 
 def to_bin(x):
     return bin(x)[2:]
@@ -332,6 +345,8 @@ def test_oct2dec_and_dec2oct_are_inverses(octal_string):
 @settings(max_examples=MAX_EXAMPLES)
 def test_oct2hex_and_hex2oct_are_inverses(octal_string):
     assert octal_string == HEX2OCT(OCT2HEX(octal_string))
+
+
 
 
 # need to do:
