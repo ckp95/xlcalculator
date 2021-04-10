@@ -865,7 +865,8 @@ def BIN2OCT(
     # I figured this out months ago and now I don't remember why it works
     new_value = (value & ~mask) - (value & mask)
     
-    if new_value < 0:
+    negative = new_value < 0
+    if negative:
         new_value += (1 << oct_width)
         
     # this doesn't have the `if new_value < 0 and new_value.bit_length() == 10 part`
@@ -876,12 +877,9 @@ def BIN2OCT(
     if places is None:
         return string
     
-    if places < len(string):
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
         raise NumExcelError
-    
-    # we do not need to check for negative here because inputs can't be negative, but it
-    # wouldn't hurt either. will not be affected when this check is added for the general
-    # case
     
     return string.zfill(places)
 
@@ -983,14 +981,26 @@ def OCT2BIN(
         raise NumExcelError
     
     value = int(as_str, 8)
-    if not (0 <= value < 512):
+    
+    oct_width = 30
+    bin_width = 10
+    
+    mask = 1 << oct_width - 1
+    new_value = (value & ~mask) - (value & mask)
+    
+    if not (-512 <= new_value < 512):
         raise NumExcelError
     
-    string = bin(value)[2:]
+    negative = new_value < 0
+    if negative:
+        new_value += (1 << bin_width)
+    
+    string = bin(new_value)[2:]
     if places is None:
         return string
     
-    if len(string) > places:
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
         raise NumExcelError
     
     return string.zfill(places)
@@ -1096,15 +1106,26 @@ def HEX2BIN(
             raise NumExcelError
         value = int(str(int(as_float)), 16) # oh dear
     
-    if not (0 <= value < 512):
+    hex_width = 40
+    bin_width = 10
+    
+    mask = 1 << hex_width - 1
+    new_value = (value & ~mask) - (value & mask)
+    
+    if not (-512 <= new_value < 512):
         raise NumExcelError
     
-    string = bin(value)[2:]
+    negative = new_value < 0
+    if negative:
+        new_value += (1 << bin_width)
+    
+    string = bin(new_value)[2:]
     
     if places is None:
         return string
     
-    if len(string) > places:
+    desired_length = len(string) if negative else places
+    if desired_length < len(string):
         raise NumExcelError
     
     return string.zfill(places)

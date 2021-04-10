@@ -426,7 +426,8 @@ def test_bin2oct(number, expected):
     Case(number=None, places=None, expected=NumExcelError),
     Case(number=None, places=2, expected="00"),
     Case(number=None, places=11, expected=NumExcelError),
-    Case(number=1000, places=1, expected=NumExcelError)
+    Case(number=1000, places=1, expected=NumExcelError),
+    Case(number=1000000000, places=1, expected="7777777000")
 )
 def test_bin2oct_with_places(number, places, expected):
     assert_equivalent(math.BIN2OCT(number, places), expected)
@@ -486,7 +487,8 @@ def test_bin2hex_with_places(number, places, expected):
     Case(number=68, expected=NumExcelError),
     Case(number=1000, expected=NumExcelError),
     Case(number=777, expected="111111111"),
-    Case(number=0.5, expected=NumExcelError)
+    Case(number=0.5, expected=NumExcelError),
+    Case(number=7777777000, expected="1000000000")
 )
 def test_oc2bin(number, expected):
     assert_equivalent(math.OCT2BIN(number), expected)
@@ -498,7 +500,8 @@ def test_oc2bin(number, expected):
     Case(number=None, places=2, expected="00"),
     Case(number=2, places=1, expected=NumExcelError),
     Case(number=None, places=11, expected=NumExcelError),
-    Case(number=None, places=10, expected="0000000000")
+    Case(number=None, places=10, expected="0000000000"),
+    Case(number=7777777000, places=1, expected="1000000000")
 )
 def test_oct2bin_with_places(number, places, expected):
     assert_equivalent(math.OCT2BIN(number, places), expected)
@@ -560,7 +563,9 @@ def test_oct2hex_with_places(number, places, expected):
     Case(number="1FF", expected="111111111"),
     Case(number=0.5, expected=NumExcelError),
     Case(number="1e3", expected="111100011"),
-    Case(number="1e0", expected="111100000")
+    Case(number="1e0", expected="111100000"),
+    Case(number="FFFFFFFDFF", expected=NumExcelError),
+    Case(number="FFFFFFFE00", expected="1000000000"),
 )
 def test_hex2bin(number, expected):
     assert_equivalent(math.HEX2BIN(number), expected)
@@ -571,7 +576,8 @@ def test_hex2bin(number, expected):
     Case(number=None, places=-1, expected=NumExcelError),
     Case(number=None, places=11, expected=NumExcelError),
     Case(number=None, places=10, expected="0000000000"),
-    Case(number=2, places=1, expected=NumExcelError)
+    Case(number=2, places=1, expected=NumExcelError),
+    Case(number="FFFFFFFE00", places=1, expected="1000000000")
 )
 def test_hex2bin_with_places(number, places, expected):
     assert_equivalent(math.HEX2BIN(number, places), expected)
@@ -579,3 +585,15 @@ def test_hex2bin_with_places(number, places, expected):
 # todo:
 # hex2oct
 # hex2dec
+
+# have missed out the higher cases of oct2bin
+# need to test that oct2bin and bin2oct are opposites:
+# hypothesis is useful here since otherwise it will never
+# find those obscure cases in the high digits
+# ie. check that for all binary-strings val,
+# val == OCT2BIN(BIN2OCT(val))
+# and likewise for the octal strings val,
+# val == BIN2OCT(OCT2BIN(val))
+
+# likewise have missed the awkward higher cases for hex2bin
+# need to do the opposites-check for all of the pairs
