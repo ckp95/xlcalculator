@@ -1,9 +1,9 @@
+import pytest
+
 from xlcalculator.xlfunctions import engineering
 from xlcalculator.xlfunctions.xlerrors import NumExcelError, ValueExcelError
 
 from ..testing import Case, parametrize_cases, assert_equivalent
-
-
 
 
 @parametrize_cases(
@@ -306,6 +306,67 @@ def test_hex2oct_with_places(number, places, expected):
 )
 def test_hex2dec(number, expected):
     assert_equivalent(engineering.HEX2DEC(number), expected)
+
+
+all_funcs = [
+    engineering.BIN2OCT,
+    engineering.BIN2DEC,
+    engineering.BIN2HEX,
+    engineering.OCT2BIN,
+    engineering.OCT2DEC,
+    engineering.OCT2HEX,
+    engineering.DEC2BIN,
+    engineering.DEC2OCT,
+    engineering.DEC2HEX,
+    engineering.HEX2BIN,
+    engineering.HEX2OCT,
+    engineering.HEX2DEC,
+]
+
+
+all_funcs_taking_places = [
+    engineering.BIN2OCT,
+    engineering.BIN2HEX,
+    engineering.OCT2BIN,
+    engineering.OCT2HEX,
+    engineering.DEC2BIN,
+    engineering.DEC2OCT,
+    engineering.DEC2HEX,
+    engineering.HEX2BIN,
+    engineering.HEX2OCT,
+]
+
+
+@pytest.mark.xfail(strict=True)
+@parametrize_cases(Case(number=False), Case(number=True))
+@parametrize_cases(*[Case(func=i) for i in all_funcs])
+def test_booleans_give_value_error(func, number):
+    assert_equivalent(func(number), ValueExcelError)
+
+
+@pytest.mark.xfail(strict=True)
+@parametrize_cases(Case(number=True), Case(number=False))
+@parametrize_cases(
+    Case(places=5),
+    Case(places=True),
+    Case(places=False)
+)
+@parametrize_cases(*[Case(func=i) for i in all_funcs_taking_places])
+def test_booleans_give_value_error_with_places(func, number, places):
+    assert_equivalent(func(number, 5), ValueExcelError)
+
+
+@parametrize_cases(Case(number=True), Case(number=False))
+@parametrize_cases(
+    Case(places=None, expected=NumExcelError),
+    Case(places=0, expected=NumExcelError),
+    Case(places=11, expected=NumExcelError),
+    Case(places="abc", expected=ValueExcelError),
+)
+@parametrize_cases(*[Case(func=i) for i in all_funcs_taking_places])
+def test_booleans_give_other_errors_with_places(func, number, places, expected):
+    assert_equivalent(func(number, places), expected)
+
 
 
 # test for nonsense strings as input

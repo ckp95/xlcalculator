@@ -379,7 +379,7 @@ def OCT2HEX(
 @xl.register()
 @xl.validate_args
 def HEX2BIN(
-    number: func_xltypes.XlText,
+    number: func_xltypes.XlAnything,
     places: func_xltypes.XlNumber = UNUSED
 ) -> func_xltypes.XlText:
     if places is UNUSED:
@@ -389,15 +389,18 @@ def HEX2BIN(
         if not (1 <= places <= 10):
             raise NumExcelError
     
-    as_str = str(number) if number else "0"
+    if isinstance(number, func_xltypes.Blank):
+        as_str = "0"
     
-    try:
-        value = int(as_str, 16)
-    except ValueError:
-        as_float = float(number)
-        if not as_float.is_integer():
+    elif isinstance(number, func_xltypes.Number):
+        if number.is_decimal and not number.value.is_integer():
             raise NumExcelError
-        value = int(str(int(as_float)), 16) # oh dear
+        as_str = str(int(number))
+        
+    elif isinstance(number, func_xltypes.Text):
+        as_str = str(number)
+    
+    value = int(as_str, 16)
     
     hex_width = 40
     bin_width = 10
