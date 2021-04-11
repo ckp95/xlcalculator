@@ -22,7 +22,7 @@ from xlcalculator.xlfunctions.engineering import (
 )
 
 
-MAX_EXAMPLES = 100
+MAX_EXAMPLES = 1000
 
 
 def fuzz_scalars(env, variables, _settings=None):
@@ -41,7 +41,7 @@ def fuzz_scalars(env, variables, _settings=None):
 def xl_numbers(min_value=None, max_value=None):
     return one_of(
         none(),  # blank cell
-        # booleans(), # can't figure this out
+        booleans(),
         integers(min_value=min_value, max_value=max_value),
         floats(min_value=min_value, max_value=max_value, allow_infinity=False, allow_nan=False)
     )

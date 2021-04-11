@@ -125,6 +125,7 @@ def test_bin2dec(number, expected):
 
 @parametrize_cases(
     Case(number=None, expected="0"),
+    Case(number="0", expected="0"),
     Case(number=1, expected="1"),
     Case(number=-1, expected=NumExcelError),
     Case(number=2, expected=NumExcelError),
@@ -134,6 +135,7 @@ def test_bin2dec(number, expected):
     Case(number=1000000000, expected="FFFFFFFE00"),
     Case(number=10000000000, expected=NumExcelError),
     Case(number=1111111111, expected="FFFFFFFFFF"),
+    Case(number="11000000000", expected=NumExcelError)
 )
 def test_bin2hex(number, expected):
     assert_equivalent(engineering.BIN2HEX(number), expected)
@@ -337,14 +339,12 @@ all_funcs_taking_places = [
 ]
 
 
-@pytest.mark.xfail(strict=True)
 @parametrize_cases(Case(number=False), Case(number=True))
 @parametrize_cases(*[Case(func=i) for i in all_funcs])
 def test_booleans_give_value_error(func, number):
     assert_equivalent(func(number), ValueExcelError)
 
 
-@pytest.mark.xfail(strict=True)
 @parametrize_cases(Case(number=True), Case(number=False))
 @parametrize_cases(
     Case(places=5),
@@ -353,7 +353,7 @@ def test_booleans_give_value_error(func, number):
 )
 @parametrize_cases(*[Case(func=i) for i in all_funcs_taking_places])
 def test_booleans_give_value_error_with_places(func, number, places):
-    assert_equivalent(func(number, 5), ValueExcelError)
+    assert_equivalent(func(number, places), ValueExcelError)
 
 
 @parametrize_cases(Case(number=True), Case(number=False))
@@ -368,7 +368,7 @@ def test_booleans_give_other_errors_with_places(func, number, places, expected):
     assert_equivalent(func(number, places), expected)
 
 
-
+# todo:
 # test for nonsense strings as input
-
+# test for decimal handling in dec2 functions
 # stupid True literal/reference thing ...
