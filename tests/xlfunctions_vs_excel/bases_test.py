@@ -2,11 +2,11 @@
 from contextlib import contextmanager
 import xlwings as xw
 from hypothesis import given, settings
-from hypothesis.strategies import integers, floats, one_of, none, text
+from hypothesis.strategies import integers, floats, one_of, none, text, booleans
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.conftest import formula_env
-from xlcalculator.xlfunctions.math import (
+from xlcalculator.xlfunctions.engineering import (
     DEC2BIN,
     DEC2OCT,
     DEC2HEX,
@@ -22,7 +22,7 @@ from xlcalculator.xlfunctions.math import (
 )
 
 
-MAX_EXAMPLES = 5000
+MAX_EXAMPLES = 100
 
 
 def fuzz_scalars(env, variables, _settings=None):
@@ -41,6 +41,7 @@ def fuzz_scalars(env, variables, _settings=None):
 def xl_numbers(min_value=None, max_value=None):
     return one_of(
         none(),  # blank cell
+        # booleans(), # can't figure this out
         integers(min_value=min_value, max_value=max_value),
         floats(min_value=min_value, max_value=max_value, allow_infinity=False, allow_nan=False)
     )
