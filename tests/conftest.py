@@ -7,7 +7,6 @@ import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import integers, floats
 
-from xlcalculator.xlfunctions.math import DEC2BIN
 from xlcalculator import xlerrors
 
 
