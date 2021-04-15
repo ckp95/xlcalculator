@@ -242,7 +242,7 @@ def test_oct2hex_with_places(number, places, expected):
     Case(number="1e3", expected="111100011"),
     Case(number="1e0", expected="111100000"),
     Case(number="FFFFFFFDFF", expected=NumExcelError),
-    Case(number="FFFFFFFE00", expected="1000000000"),
+    Case(number="FFFFFFFE00", expected="1000000000"),    
 )
 def test_hex2bin(number, expected):
     assert_equivalent(engineering.HEX2BIN(number), expected)
@@ -365,7 +365,23 @@ def test_booleans_give_other_errors_with_places(func, number, places, expected):
     assert_equivalent(func(number, places), expected)
 
 
+@parametrize_cases(
+    Case(func=engineering.BIN2OCT, expected=NumExcelError),
+    Case(func=engineering.BIN2DEC, expected=NumExcelError),
+    Case(func=engineering.BIN2HEX, expected=NumExcelError),
+    Case(func=engineering.OCT2BIN, expected=NumExcelError),
+    Case(func=engineering.OCT2DEC, expected=NumExcelError),
+    Case(func=engineering.OCT2HEX, expected=NumExcelError),
+    Case(func=engineering.DEC2BIN, expected=ValueExcelError),
+    Case(func=engineering.DEC2OCT, expected=ValueExcelError),
+    Case(func=engineering.DEC2HEX, expected=ValueExcelError),
+    Case(func=engineering.HEX2BIN, expected=NumExcelError),
+    Case(func=engineering.HEX2OCT, expected=NumExcelError),
+    Case(func=engineering.HEX2DEC, expected=NumExcelError),
+)
+def test_nonsense_string_gives_correct_errors(func, expected):
+    assert_equivalent(func("nonsense"), expected)
+
 # todo:
-# test for nonsense strings as input
 # test for decimal handling in dec2 functions
 # stupid True literal/reference thing ...
