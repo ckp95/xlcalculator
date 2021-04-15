@@ -323,10 +323,7 @@ def test_oct2hex_and_hex2oct_are_inverses(octal_string):
     assert octal_string == HEX2OCT(OCT2HEX(octal_string))
 
 
-# need to do:
-# bin2oct-oct2bin (done)
-# dec2bin-bin2dec (done)
-# hex2bin-bin2hex (done)
-# dec2oct-oct2dec (done)
-# oct2hex-hex2oct (done)
-# hex2dec-dec2hex
+@given(decimal_integer=integers(min_value=-2**39, max_value=2**39 - 1))
+@settings(max_examples=MAX_EXAMPLES)
+def test_hex2dec_and_dec2hex_are_inverses(decimal_integer):
+    assert decimal_integer == HEX2DEC(DEC2HEX(decimal_integer))
