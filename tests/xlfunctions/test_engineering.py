@@ -13,6 +13,12 @@ from ..testing import Case, parametrize_cases, assert_equivalent
     Case(number=1, expected="1"),
     Case(number=-1, expected="1111111111"),
     Case(number=-2, expected="1111111110"),
+    Case(number=4.2, expected="100"),
+    Case(number=4.5, expected="100"),
+    Case(number=4.8, expected="100"),
+    Case(number=-4.2, expected="1111111100"),
+    Case(number=-4.5, expected="1111111100"),
+    Case(number=-4.8, expected="1111111100"),
 )
 def test_dec2bin(number, expected):
     assert_equivalent(engineering.DEC2BIN(number), expected)
@@ -40,6 +46,12 @@ def test_dec2bin_with_places(number, places, expected):
     Case(number=2 ** 29 - 1, expected="3777777777"),
     Case(number=-(2 ** 29) - 1, expected=NumExcelError),
     Case(number=-(2 ** 29), expected="4000000000"),
+    Case(number=4.2, expected="4"),
+    Case(number=4.5, expected="4"),
+    Case(number=4.8, expected="4"),
+    Case(number=-4.2, expected="7777777774"),
+    Case(number=-4.5, expected="7777777774"),
+    Case(number=-4.8, expected="7777777774"),
 )
 def test_dec2oct(number, expected):
     assert_equivalent(engineering.DEC2OCT(number), expected)
@@ -65,6 +77,12 @@ def test_dec2oct_with_places(number, places, expected):
     Case(number=2 ** 39 - 1, expected="7FFFFFFFFF"),
     Case(number=-(2 ** 39) - 1, expected=NumExcelError),
     Case(number=-(2 ** 39), expected="8000000000"),
+    Case(number=4.2, expected="4"),
+    Case(number=4.5, expected="4"),
+    Case(number=4.8, expected="4"),
+    Case(number=-4.2, expected="FFFFFFFFFC"),
+    Case(number=-4.5, expected="FFFFFFFFFC"),
+    Case(number=-4.8, expected="FFFFFFFFFC"),
 )
 def test_dec2hex(number, expected):
     assert_equivalent(engineering.DEC2HEX(number), expected)
@@ -412,8 +430,3 @@ def test_empty_string_gives_value_error_for_dec2_funcs(func):
 )
 def test_empty_string_gives_zero_for_non_dec2_funcs(func, expected):
     assert_equivalent(func(""), expected)  
-
-
-# todo:
-# test for decimal handling in dec2 functions
-# stupid True literal/reference thing ...
