@@ -210,7 +210,9 @@ def test_oct2dec(number, expected):
     Case(number=7777777777, expected="FFFFFFFFFF"),
     Case(number=12, expected="A"),
     Case(number=1.5, expected=NumExcelError),
+    Case(number=3777777777, expected="1FFFFFFF"),
     Case(number=4000000000, expected="FFE0000000"),
+    Case(number=14000000000, expected=NumExcelError)
 )
 def test_oct2hex(number, expected):
     assert_equivalent(engineering.OCT2HEX(number), expected)
@@ -327,17 +329,23 @@ all_funcs = [
 ]
 
 
-all_funcs_taking_places = [
-    engineering.BIN2OCT,
-    engineering.BIN2HEX,
-    engineering.OCT2BIN,
-    engineering.OCT2HEX,
+all_dec2_funcs = [
     engineering.DEC2BIN,
     engineering.DEC2OCT,
-    engineering.DEC2HEX,
-    engineering.HEX2BIN,
-    engineering.HEX2OCT,
+    engineering.DEC2HEX
 ]
+
+all_non_dec2_funcs = [x for x in all_funcs if x not in all_dec2_funcs]
+
+all_2dec_funcs = [
+    engineering.BIN2DEC,
+    engineering.OCT2DEC,
+    engineering.HEX2DEC
+]
+
+all_non_2dec_funcs = [x for x in all_funcs if x not in all_2dec_funcs]
+all_funcs_taking_places = all_non_2dec_funcs
+
 
 
 @parametrize_cases(Case(number=False), Case(number=True))
@@ -363,24 +371,48 @@ def test_booleans_give_value_error_with_places(func, number, places):
 @parametrize_cases(*[Case(func=i) for i in all_funcs_taking_places])
 def test_booleans_give_other_errors_with_places(func, number, places, expected):
     assert_equivalent(func(number, places), expected)
-
+    
 
 @parametrize_cases(
-    Case(func=engineering.BIN2OCT, expected=NumExcelError),
-    Case(func=engineering.BIN2DEC, expected=NumExcelError),
-    Case(func=engineering.BIN2HEX, expected=NumExcelError),
-    Case(func=engineering.OCT2BIN, expected=NumExcelError),
-    Case(func=engineering.OCT2DEC, expected=NumExcelError),
-    Case(func=engineering.OCT2HEX, expected=NumExcelError),
-    Case(func=engineering.DEC2BIN, expected=ValueExcelError),
-    Case(func=engineering.DEC2OCT, expected=ValueExcelError),
-    Case(func=engineering.DEC2HEX, expected=ValueExcelError),
-    Case(func=engineering.HEX2BIN, expected=NumExcelError),
-    Case(func=engineering.HEX2OCT, expected=NumExcelError),
-    Case(func=engineering.HEX2DEC, expected=NumExcelError),
+    Case(places="5", expected="00000"),
+    Case(places="0", expected=NumExcelError),
+    Case(places="11", expected=NumExcelError),
+    Case(places="", expected=ValueExcelError)
 )
-def test_nonsense_string_gives_correct_errors(func, expected):
-    assert_equivalent(func("nonsense"), expected)
+@parametrize_cases(*[Case(func=i) for i in all_funcs_taking_places])
+def test_funcs_taking_places_string_handling(func, places, expected):
+    assert_equivalent(func(0, places), expected)
+
+
+@parametrize_cases(*[Case(func=i) for i in all_dec2_funcs])
+def test_nonsense_string_gives_value_error_in_dec2_funcs(func):
+    assert_equivalent(func("nonsense"), ValueExcelError)
+    
+
+@parametrize_cases(*[Case(func=i) for i in all_non_dec2_funcs])
+def test_nonsense_string_gives_num_error_in_non_dec2_funcs(func):
+    assert_equivalent(func("nonsense"), NumExcelError)
+    
+
+@parametrize_cases(*[Case(func=i) for i in all_dec2_funcs])
+def test_empty_string_gives_value_error_for_dec2_funcs(func):
+    assert_equivalent(func(""), ValueExcelError)
+    
+
+@parametrize_cases(
+    Case(func=engineering.BIN2OCT, expected="0"),
+    Case(func=engineering.BIN2DEC, expected=0),
+    Case(func=engineering.BIN2HEX, expected="0"),
+    Case(func=engineering.OCT2BIN, expected="0"),
+    Case(func=engineering.OCT2DEC, expected=0),
+    Case(func=engineering.OCT2HEX, expected="0"),
+    Case(func=engineering.HEX2BIN, expected="0"),
+    Case(func=engineering.HEX2OCT, expected="0"),
+    Case(func=engineering.HEX2DEC, expected=0),
+)
+def test_empty_string_gives_zero_for_non_dec2_funcs(func, expected):
+    assert_equivalent(func(""), expected)  
+
 
 # todo:
 # test for decimal handling in dec2 functions
