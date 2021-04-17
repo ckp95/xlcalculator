@@ -2,7 +2,16 @@
 from contextlib import contextmanager
 import pytest
 from hypothesis import given, settings
-from hypothesis.strategies import integers, floats, one_of, none, text, booleans, just, sampled_from
+from hypothesis.strategies import (
+    integers,
+    floats,
+    one_of,
+    none,
+    text,
+    booleans,
+    just,
+    sampled_from,
+)
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.xlwings_fixtures import formula_env
@@ -223,7 +232,6 @@ def test_against_xlwings(excel_workbook, formula, values):
     fuzz_scalars(excel_workbook, formula, values)
 
 
-
 def to_bin(x):
     return bin(x)[2:]
 
@@ -276,7 +284,7 @@ def test_oct2hex_and_hex2oct_are_inverses(octal_string):
     assert octal_string == HEX2OCT(OCT2HEX(octal_string))
 
 
-@given(decimal_integer=integers(min_value=-2**39, max_value=2**39 - 1))
+@given(decimal_integer=integers(min_value=-(2 ** 39), max_value=2 ** 39 - 1))
 @settings(max_examples=MAX_EXAMPLES)
 def test_hex2dec_and_dec2hex_are_inverses(decimal_integer):
     assert decimal_integer == HEX2DEC(DEC2HEX(decimal_integer))

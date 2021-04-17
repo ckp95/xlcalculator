@@ -11,37 +11,39 @@ def pytest_addoption(parser):
         "--run-xlwings",
         action="store_true",
         default=False,
-        help="run tests that depend on xlwings"
+        help="run tests that depend on xlwings",
     )
     parser.addoption(
         "--max-examples",
         action="store",
         default=100,
         help="max examples to used per property-based test",
-        type=int
+        type=int,
     )
 
 
 CONFIG = {}
 
+
 def pytest_configure(config):
-    config.addinivalue_line("markers", "xlwings: mark test as depending on xlwings package")
-    
+    config.addinivalue_line(
+        "markers", "xlwings: mark test as depending on xlwings package"
+    )
+
     # hacky way of getting custom configs as command-line arguments, without needing to
     # access the data in a test via a fixture. use like this in a test module:
     #
     #   from tests.conftest import CONFIG
     #   my_value = CONFIG["some-key"]
-    
+
     CONFIG["max-examples"] = config.getoption("--max-examples")
-    
+
 
 def pytest_collection_modifyitems(config, items):
     if config.getoption("--run-xlwings"):
         return
-    
+
     skip_xlwings = pytest.mark.skip(reason="need --run-xlwings option to run")
     for item in items:
         if "xlwings" in item.keywords:
             item.add_marker(skip_xlwings)
-
