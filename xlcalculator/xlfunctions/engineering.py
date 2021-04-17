@@ -169,6 +169,8 @@ def BIN2OCT(
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
     
+    if len(as_str) > 10:
+        raise NumExcelError
     
     permitted_digits = set("01")
     if set(as_str) - permitted_digits:
@@ -225,6 +227,9 @@ def BIN2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
         
+    if len(as_str) > 10:
+        raise NumExcelError
+        
     if set(as_str) - set("01"):
         raise NumExcelError
 
@@ -268,6 +273,9 @@ def BIN2HEX(
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+        
+    if len(as_str) > 10:
+        raise NumExcelError
 
     permitted_digits = set("01")
     if set(as_str) - permitted_digits:
@@ -327,6 +335,9 @@ def OCT2BIN(
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+    
+    if len(as_str) > 10:
+        raise NumExcelError
 
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
@@ -374,6 +385,9 @@ def OCT2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+        
+    if len(as_str) > 10:
+        raise NumExcelError
 
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
@@ -417,6 +431,9 @@ def OCT2HEX(
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+        
+    if len(as_str) > 10:
+        raise NumExcelError
 
     permitted_digits = set("01234567")
     if set(as_str) - permitted_digits:
@@ -477,6 +494,9 @@ def HEX2BIN(
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+    
+    if len(as_str) > 10:
+        raise NumExcelError
         
     permitted_digits = set("0123456789ABCDEFabcdef")
     if set(as_str) - permitted_digits:
@@ -537,6 +557,9 @@ def HEX2OCT(
 
     elif isinstance(number, func_xltypes.Text):
         as_str = str(number) if number else "0"
+        
+    if len(as_str) > 10:
+        raise NumExcelError
     
     permitted_digits = set("0123456789ABCDEFabcdef")
     if set(as_str) - permitted_digits:
@@ -584,6 +607,9 @@ def HEX2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
         if number.is_decimal and not number.value.is_integer():
             raise NumExcelError
         as_str = str(int(number))
+        
+    if len(as_str) > 10:
+        raise NumExcelError
 
     permitted_digits = set("0123456789ABCDEFabcdef")
     if set(as_str) - permitted_digits:
