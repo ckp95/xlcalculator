@@ -2,7 +2,7 @@
 from contextlib import contextmanager
 import pytest
 from hypothesis import given, settings
-from hypothesis.strategies import integers, floats, one_of, none, text, booleans, just
+from hypothesis.strategies import integers, floats, one_of, none, text, booleans, just, sampled_from
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
 from tests.xlwings_fixtures import formula_env
@@ -21,23 +21,20 @@ from xlcalculator.xlfunctions.engineering import (
     HEX2DEC,
 )
 
-
 from tests.conftest import CONFIG
+from tests.xlwings_fixtures import fuzz_scalars, given
 
 MAX_EXAMPLES = CONFIG["max-examples"]
 
 
-def fuzz_scalars(env, variables, _settings=None):
-    def inner(**kwargs):
-        python_result = env.formula(**kwargs)
-        env.set_args(**kwargs)
-        excel_result = env.value
+def zero_pad_strategy(n: str):
+    return sampled_from(list(range(13))).map(lambda x: n.zfill(x))
 
-        assert_equivalent(result=python_result, expected=excel_result)
 
-    _settings = _settings or settings(deadline=None, max_examples=MAX_EXAMPLES)
-    func = variables(_settings(inner))
-    func()
+def integer_variants(n: int):
+    # given an integer, return a strategy comprising different representations of that
+    # integer: as itself, or as a possibly zero-padded string
+    return one_of(just(n), just(str(n)).flatmap(zero_pad_strategy))
 
 
 def xl_numbers(min_value=None, max_value=None):
@@ -45,8 +42,7 @@ def xl_numbers(min_value=None, max_value=None):
         none(),  # blank cell
         just(""),
         booleans(),
-        integers(min_value=min_value, max_value=max_value),
-        integers(min_value=min_value, max_value=max_value).map(str),
+        integers(min_value=min_value, max_value=max_value).flatmap(integer_variants),
         floats(
             min_value=min_value,
             max_value=max_value,
@@ -60,240 +56,172 @@ def near(value, width=5):
     return xl_numbers(min_value=value - width, max_value=value + width)
 
 
-env_dec2bin = formula_env(DEC2BIN, "number")
-
-
-@pytest.mark.xlwings
-def test_dec2bin(env_dec2bin):
-    variables = given(number=xl_numbers(-550, 550))
-    fuzz_scalars(env=env_dec2bin, variables=variables)
-
-
-env_dec2bin_places = formula_env(DEC2BIN, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_dec2bin_with_places(env_dec2bin_places):
-    variables = given(number=xl_numbers(-550, 550), places=xl_numbers(-5, 15))
-    fuzz_scalars(env=env_dec2bin_places, variables=variables)
-
-
-env_dec2oct = formula_env(DEC2OCT, "number")
-
-
-@pytest.mark.xlwings
-def test_dec2oct(env_dec2oct):
-    lower, upper = -(2 ** 29), 2 ** 29
-    variables = given(number=one_of(xl_numbers(), near(lower), near(upper)))
-    fuzz_scalars(env=env_dec2oct, variables=variables)
-
-
-env_dec2oct_places = formula_env(DEC2OCT, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_dec2oct_with_places(env_dec2oct_places):
-    lower, upper = -(2 ** 29), 2 ** 29
-    variables = given(
-        number=xl_numbers(lower - 5, upper + 5), places=xl_numbers(-5, 15)
-    )
-    fuzz_scalars(env=env_dec2oct_places, variables=variables)
-
-
-env_dec2hex = formula_env(DEC2HEX, "number")
-
-
-@pytest.mark.xlwings
-def test_dec2hex(env_dec2hex):
-    lower, upper = -(2 ** 39), 2 ** 39
-    variables = given(number=one_of(xl_numbers(), near(lower), near(upper)))
-    fuzz_scalars(env=env_dec2hex, variables=variables)
-
-
-env_dec2hex_places = formula_env(DEC2HEX, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_dec2hex_with_places(env_dec2hex_places):
-    lower, upper = -(2 ** 39), 2 ** 39
-    variables = given(
-        number=xl_numbers(lower - 5, upper + 5), places=xl_numbers(-5, 15)
-    )
-    fuzz_scalars(env=env_dec2hex_places, variables=variables)
-
-
 def binary_numbers_as_strings(max_size):
-    return text(alphabet=set("01"), min_size=1, max_size=max_size).filter(
-        lambda x: x == "0" or x[0] != "0"
-    )
+    return text(alphabet=set("01"), min_size=1, max_size=max_size)
 
 
-env_bin2oct = formula_env(BIN2OCT, "number")
+def octal_numbers_as_strings(min_size, max_size):
+    return text(alphabet=set("01234567"), min_size=min_size, max_size=max_size)
 
 
-@pytest.mark.xlwings
-def test_bin2oct(env_bin2oct):
-    variables = given(number=one_of(xl_numbers(), binary_numbers_as_strings(11)))
-    fuzz_scalars(env=env_bin2oct, variables=variables)
-
-
-env_bin2oct_places = formula_env(BIN2OCT, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_bin2oct_with_places(env_bin2oct_places):
-    variables = given(
-        number=one_of(xl_numbers(), binary_numbers_as_strings(11)),
-        places=xl_numbers(-5, 15),
-    )
-    fuzz_scalars(env=env_bin2oct_places, variables=variables)
-
-
-env_bin2dec = formula_env(BIN2DEC, "number")
-
-
-@pytest.mark.xlwings
-def test_bin2dec(env_bin2dec):
-    variables = given(number=one_of(xl_numbers(), binary_numbers_as_strings(11)))
-    fuzz_scalars(env=env_bin2dec, variables=variables)
-
-
-# ___2DEC functions do not take a `places` parameter
-
-
-env_bin2hex = formula_env(BIN2HEX, "number")
-
-
-@pytest.mark.xlwings
-def test_bin2hex(env_bin2hex):
-    variables = given(number=one_of(xl_numbers(), binary_numbers_as_strings(11)))
-    fuzz_scalars(env=env_bin2hex, variables=variables)
-
-
-env_bin2hex_places = formula_env(BIN2HEX, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_bin2hex_with_places(env_bin2hex_places):
-    variables = given(
-        number=one_of(xl_numbers(), binary_numbers_as_strings(11)),
-        places=xl_numbers(-5, 15),
-    )
-    fuzz_scalars(env=env_bin2hex_places, variables=variables)
-
-
-def octal_numbers_as_strings(max_size):
-    return text(alphabet=set("01234567"), min_size=1, max_size=max_size).filter(
-        lambda x: x == "0" or x[0] != "0"
-    )
-
-
-env_oct2bin = formula_env(OCT2BIN, "number")
-
-
-@pytest.mark.xlwings
-def test_oct2bin(env_oct2bin):
-    variables = given(number=one_of(xl_numbers(), octal_numbers_as_strings(4)))
-    fuzz_scalars(env=env_oct2bin, variables=variables)
-
-
-env_oct2bin_places = formula_env(OCT2BIN, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_oct2bin_with_places(env_oct2bin_places):
-    variables = given(
-        number=one_of(xl_numbers(), octal_numbers_as_strings(4)),
-        places=xl_numbers(-5, 15),
-    )
-    fuzz_scalars(env=env_oct2bin_places, variables=variables)
-
-
-env_oct2dec = formula_env(OCT2DEC, "number")
-
-
-@pytest.mark.xlwings
-def test_oct2dec(env_oct2dec):
-    variables = given(number=one_of(xl_numbers(), octal_numbers_as_strings(11)))
-    fuzz_scalars(env=env_oct2dec, variables=variables)
-
-
-env_oct2hex = formula_env(OCT2HEX, "number")
-
-
-@pytest.mark.xlwings
-def test_oct2hex(env_oct2hex):
-    variables = given(number=one_of(xl_numbers(), octal_numbers_as_strings(11)))
-    fuzz_scalars(env=env_oct2hex, variables=variables)
-
-
-env_oct2hex_places = formula_env(OCT2HEX, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_oct2hex_with_places(env_oct2hex_places):
-    variables = given(
-        number=one_of(xl_numbers(), octal_numbers_as_strings(11)),
-        places=xl_numbers(-5, 15),
-    )
-    fuzz_scalars(env=env_oct2hex_places, variables=variables)
-
-
-def hex_numbers_as_strings(max_size):
+def hex_numbers_as_strings(min_size, max_size):
     return text(
-        alphabet=set("0123456789ABCDEFabcdef"), min_size=1, max_size=max_size
-    ).filter(lambda x: x == "0" or x[0] != "0")
-
-
-env_hex2bin = formula_env(HEX2BIN, "number")
-
-
-@pytest.mark.xlwings
-def test_hex2bin(env_hex2bin):
-    variables = given(number=one_of(xl_numbers(), hex_numbers_as_strings(3)))
-    fuzz_scalars(env=env_hex2bin, variables=variables)
-
-
-env_hex2bin_places = formula_env(HEX2BIN, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_hex2bin_with_places(env_hex2bin_places):
-    variables = given(
-        number=one_of(xl_numbers(), hex_numbers_as_strings(3)),
-        places=xl_numbers(-5, 15),
+        alphabet=set("0123456789ABCDEFabcdef"), min_size=min_size, max_size=max_size
     )
-    fuzz_scalars(env=env_hex2bin_places, variables=variables)
-
-
-env_hex2oct = formula_env(HEX2OCT, "number")
 
 
 @pytest.mark.xlwings
-def test_hex2oct(env_hex2oct):
-    variables = given(number=one_of(xl_numbers(), hex_numbers_as_strings(11)))
-    fuzz_scalars(env=env_hex2oct, variables=variables)
+@parametrize_cases(
+    Case("dec2bin", formula=DEC2BIN, values=given(number=xl_numbers(-550, 550))),
+    Case(
+        "dec2bin-places",
+        formula=DEC2BIN,
+        values=given(number=xl_numbers(-550, 550), places=xl_numbers(-2, 12)),
+    ),
+    Case(
+        "dec2oct",
+        formula=DEC2OCT,
+        values=given(number=one_of(xl_numbers(), near(-(2 ** 29)), near(2 ** 29))),
+    ),
+    Case(
+        "dec2oct-places",
+        formula=DEC2OCT,
+        values=given(
+            number=one_of(xl_numbers(), near(-(2 ** 29)), near(2 ** 29)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "dec2hex",
+        formula=DEC2HEX,
+        values=given(number=one_of(xl_numbers(), near(-(2 ** 39)), near(2 ** 39))),
+    ),
+    Case(
+        "dec2hex-places",
+        formula=DEC2HEX,
+        values=given(
+            number=one_of(xl_numbers(), near(-(2 ** 39)), near(2 ** 39)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "bin2oct",
+        formula=BIN2OCT,
+        values=given(number=one_of(xl_numbers(), binary_numbers_as_strings(11))),
+    ),
+    Case(
+        "bin2oct-places",
+        formula=BIN2OCT,
+        values=given(
+            number=one_of(xl_numbers(), binary_numbers_as_strings(11)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "bin2dec",
+        formula=BIN2DEC,
+        values=given(number=one_of(xl_numbers(), binary_numbers_as_strings(11))),
+    ),
+    # __2DEC functions do not take a `places` parameter so there is no bin2dec-places
+    Case(
+        "bin2hex",
+        formula=BIN2HEX,
+        values=given(number=one_of(xl_numbers(), binary_numbers_as_strings(11))),
+    ),
+    Case(
+        "bin2hex-places",
+        formula=BIN2HEX,
+        values=given(
+            number=one_of(xl_numbers(), binary_numbers_as_strings(11)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "oct2bin",
+        formula=OCT2BIN,
+        values=given(
+            number=one_of(
+                xl_numbers(),
+                octal_numbers_as_strings(1, 4),
+                octal_numbers_as_strings(9, 11),
+            )
+        ),
+    ),
+    Case(
+        "oct2bin-places",
+        formula=OCT2BIN,
+        values=given(
+            number=one_of(
+                xl_numbers(),
+                octal_numbers_as_strings(1, 4),
+                octal_numbers_as_strings(9, 11),
+            ),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "oct2dec",
+        formula=OCT2DEC,
+        values=given(number=one_of(xl_numbers(), octal_numbers_as_strings(1, 11))),
+    ),
+    Case(
+        "oct2hex",
+        formula=OCT2HEX,
+        values=given(number=one_of(xl_numbers(), octal_numbers_as_strings(1, 11))),
+    ),
+    Case(
+        "oct2hex-places",
+        formula=OCT2HEX,
+        values=given(
+            number=one_of(xl_numbers(), octal_numbers_as_strings(1, 11)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "hex2bin",
+        formula=HEX2BIN,
+        values=given(
+            number=one_of(
+                xl_numbers(),
+                hex_numbers_as_strings(1, 3),
+                hex_numbers_as_strings(9, 11),
+            )
+        ),
+    ),
+    Case(
+        "hex2bin-places",
+        formula=HEX2BIN,
+        values=given(
+            number=one_of(
+                xl_numbers(),
+                hex_numbers_as_strings(1, 3),
+                hex_numbers_as_strings(9, 11),
+            ),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "hex2oct",
+        formula=HEX2OCT,
+        values=given(number=one_of(xl_numbers(), hex_numbers_as_strings(1, 11))),
+    ),
+    Case(
+        "hex2oct-places",
+        formula=HEX2OCT,
+        values=given(
+            number=one_of(xl_numbers(), hex_numbers_as_strings(1, 11)),
+            places=xl_numbers(-2, 12),
+        ),
+    ),
+    Case(
+        "hex2dec",
+        formula=HEX2DEC,
+        values=given(number=one_of(xl_numbers(), hex_numbers_as_strings(1, 11))),
+    ),
+)
+def test_against_xlwings(excel_workbook, formula, values):
+    fuzz_scalars(excel_workbook, formula, values)
 
-
-env_hex2oct_places = formula_env(HEX2OCT, ["number", "places"])
-
-
-@pytest.mark.xlwings
-def test_hex2oct_with_places(env_hex2oct_places):
-    variables = given(
-        number=one_of(xl_numbers(), hex_numbers_as_strings(11)),
-        places=xl_numbers(-5, 15),
-    )
-    fuzz_scalars(env=env_hex2oct_places, variables=variables)
-
-
-env_hex2dec = formula_env(HEX2DEC, "number")
-
-
-@pytest.mark.xlwings
-def test_hex2dec(env_hex2dec):
-    variables = given(number=one_of(xl_numbers(), hex_numbers_as_strings(11)))
-    fuzz_scalars(env=env_hex2dec, variables=variables)
 
 
 def to_bin(x):

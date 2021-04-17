@@ -3,8 +3,12 @@ from typing import Sequence, Callable, Union
 
 import xlwings
 import pytest
+import hypothesis
 
 from xlcalculator import xlerrors
+from tests.testing import assert_equivalent
+from tests.conftest import CONFIG
+
 
 
 @pytest.fixture(scope="session")
@@ -117,18 +121,30 @@ class FormulaTestingEnvironment:
             self.args[name].value = value
 
 
-def formula_env(formula: Callable, argnames: Union[str, Sequence[str]]):
-    """Parametrized fixture that creates a FormulaTestingEnvironment from a function and
-    argument names. The workbook is provided by the `excel_workbook` fixture.
-    """
+# save the args and kwargs passed to `given` as attributes so we can access them ourselves
+# later in the fuzz_scalars function
+_given = hypothesis.given
+def given(*args, **kwargs):
+    res = _given(*args, **kwargs)
+    setattr(res, "given_args", args)
+    setattr(res, "given_kwargs", kwargs)
+    return res
 
-    if isinstance(argnames, str):
-        argnames = [argnames]
 
-    @pytest.fixture
-    def env(excel_workbook):
-        return FormulaTestingEnvironment(
-            wb=excel_workbook, formula=formula, argnames=argnames
-        )
+def fuzz_scalars(wb, formula, values, settings=None):
+    if not hasattr(values, "given_kwargs"):
+        raise ValueError(f"You can't use the `given` function from hypothesis; you need to use the patched version defined in {given.__module__}.py")
+    
+    argnames = list(values.given_kwargs.keys())
+    env = FormulaTestingEnvironment(wb, formula, argnames)
 
-    return env
+    def inner(**kwargs_from_hypothesis):
+        python_result = env.formula(**kwargs_from_hypothesis)
+        env.set_args(**kwargs_from_hypothesis)
+        excel_result = env.value
+
+        assert_equivalent(result=python_result, expected=excel_result)
+    
+    settings = settings or hypothesis.settings(deadline=None, max_examples=CONFIG["max-examples"])
+    func = settings(values(inner))
+    func()
