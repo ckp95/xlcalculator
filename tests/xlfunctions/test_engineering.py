@@ -442,3 +442,4 @@ def test_empty_string_gives_zero_for_non_dec2_funcs(func, expected):
 
 
 # need to test handling of string "1"
+# should try to devise tighter bounds on the property tests
