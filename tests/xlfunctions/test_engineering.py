@@ -432,5 +432,9 @@ def test_empty_string_gives_zero_for_non_dec2_funcs(func, expected):
     assert_equivalent(func(""), expected)
 
 
-# need to test handling of string "1"
+@parametrize_cases(*[Case(func=i) for i in all_funcs])
+def test_string_numbers_work_properly(func):
+    assert_equivalent(func("1"), 1, lambda x, y: str(x) == str(y))
+
+
 # should try to devise tighter bounds on the property tests
