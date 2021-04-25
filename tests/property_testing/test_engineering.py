@@ -1,7 +1,7 @@
 #%%
 from contextlib import contextmanager
 import pytest
-from hypothesis import given, settings
+from hypothesis import
 from hypothesis.strategies import (
     integers,
     floats,
@@ -14,7 +14,6 @@ from hypothesis.strategies import (
 )
 
 from tests.testing import assert_equivalent, Case, parametrize_cases
-from tests.xlwings_fixtures import formula_env
 from xlcalculator.xlfunctions.engineering import (
     DEC2BIN,
     DEC2OCT,
@@ -288,3 +287,5 @@ def test_oct2hex_and_hex2oct_are_inverses(octal_string):
 @settings(max_examples=MAX_EXAMPLES)
 def test_hex2dec_and_dec2hex_are_inverses(decimal_integer):
     assert decimal_integer == HEX2DEC(DEC2HEX(decimal_integer))
+
+
