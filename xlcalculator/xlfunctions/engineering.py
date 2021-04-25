@@ -22,20 +22,26 @@ class Unused:
 UNUSED = Unused()
 
 
+def handle_places(places):    
+    if places is UNUSED:
+        return None
+    
+    if isinstance(places, func_xltypes.Boolean):
+        raise ValueExcelError
+    
+    places = int(places)
+    if not (1 <= places <= 10):
+        raise NumExcelError
+    
+    return places
+
+
 @xl.register()
 @xl.validate_args
 def DEC2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
-) -> func_xltypes.XlText:    
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+) -> func_xltypes.XlText:
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -65,15 +71,7 @@ def DEC2BIN(
 def DEC2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -105,15 +103,7 @@ def DEC2OCT(
 def DEC2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -145,15 +135,7 @@ def DEC2HEX(
 def BIN2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -250,15 +232,7 @@ def BIN2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
 def BIN2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -312,15 +286,7 @@ def BIN2HEX(
 def OCT2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -408,15 +374,7 @@ def OCT2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
 def OCT2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -471,15 +429,7 @@ def OCT2HEX(
 def HEX2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
@@ -534,15 +484,7 @@ def HEX2BIN(
 def HEX2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
-    if isinstance(places, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if places is UNUSED:
-        places = None
-    else:
-        places = int(places)
-        if not (1 <= places <= 10):
-            raise NumExcelError
+    places = handle_places(places)
 
     if isinstance(number, func_xltypes.Boolean):
         raise ValueExcelError
