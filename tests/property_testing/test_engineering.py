@@ -1,7 +1,7 @@
 #%%
 from contextlib import contextmanager
 import pytest
-from hypothesis import
+from hypothesis import settings
 from hypothesis.strategies import (
     integers,
     floats,
@@ -56,7 +56,7 @@ def xl_numbers(min_value=None, max_value=None):
             max_value=max_value,
             allow_infinity=False,
             allow_nan=False,
-        ),
+        ).filter(lambda x: x > 1e-300), # guard against tiny floats that excel can't handle
     )
 
 
