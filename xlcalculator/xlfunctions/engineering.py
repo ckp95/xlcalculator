@@ -1,3 +1,6 @@
+from typing import Union, Optional
+# from typing import Literal # this doesn't work in Python 3.7
+
 from . import xl, func_xltypes
 from .xlerrors import NumExcelError, ValueExcelError
 
@@ -19,10 +22,10 @@ class Unused:
     pass
 
 
-UNUSED = Unused()
+UNUSED = Unused() # todo: move this into its own module so that it acts like a singleton
 
 
-def handle_places(places):    
+def handle_places(places: Union[Unused, func_xltypes.XlAnything]) -> Optional[int]:
     if places is UNUSED:
         return None
     
@@ -36,34 +39,99 @@ def handle_places(places):
     return places
 
 
+dec = "dec"
+
+# Base = Literal[bin, dec, oct, hex] # this doesn't work in Python 3.7
+
+PERMITTED_DIGITS = {
+    bin: set("01"),
+    oct: set("01234567"),
+    hex: set("0123456789ABCDEFabcdef"),
+}
+
+BIT_WIDTHS = {
+    bin: 10,
+    oct: 30,
+    hex: 40,
+}
+
+
+BOUNDS = {
+    frozenset([bin, oct]): 2**9,
+    frozenset([bin, dec]): 2**9,
+    frozenset([bin, hex]): 2**9,
+    frozenset([oct, dec]): 2**29,
+    frozenset([oct, hex]): 2**29,
+    frozenset([dec, hex]): 2**39
+}
+
+
+def handle_number(number: func_xltypes.XlAnything, origin) -> int:
+    if isinstance(number, func_xltypes.Boolean):
+        raise ValueExcelError
+    
+    if origin == dec:
+        return int(number)
+    
+    if isinstance(number, func_xltypes.Blank):
+        as_str = "0"
+        
+    elif isinstance(number, func_xltypes.Number):
+        if number.is_decimal and not number.value.is_integer():
+            raise NumExcelError
+        
+        as_str = str(int(number))
+        
+    elif isinstance(number, func_xltypes.Text):
+        as_str = str(number) if number else "0"
+        
+    if len(as_str) > 10:
+        raise NumExcelError
+    
+    if set(as_str) - PERMITTED_DIGITS[origin]:
+        raise NumExcelError
+    
+    value = int(as_str, {bin: 2, oct: 8, hex: 16}[origin])
+    mask = 1 << BIT_WIDTHS[origin] - 1
+    
+    return (value & ~mask) - (value & mask)
+
+
+def to_base(value: int, origin, destination) -> Union[int, str]:
+    bound = BOUNDS[frozenset([origin, destination])]
+    if not (-bound <= value < bound):
+        raise NumExcelError
+    
+    was_negative = value < 0
+    if was_negative and destination in BIT_WIDTHS:
+        value += 1 << BIT_WIDTHS[destination]
+        
+    return value, was_negative
+
+
+def to_string(value, was_negative, destination, places):
+    string = destination(value)[2:].upper()
+    if places is None:
+        return string
+    
+    desired_length = len(string) if was_negative else places
+    if desired_length < len(string):
+        raise NumExcelError
+    
+    return string.zfill(desired_length)
+    
+
+
+
 @xl.register()
 @xl.validate_args
 def DEC2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    number = int(number)
-    if not (-513 < number < 512):
-        raise NumExcelError
-
-    negative = number < 0
-    bit_width = 10
-    if negative:
-        number += 1 << bit_width
-
-    string = bin(number)[2:]
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(desired_length)
+    number = handle_number(number, origin=dec)
+    new_value, negative = to_base(number, dec, bin)
+    return to_string(new_value, negative, bin, places)
 
 
 @xl.register()
@@ -72,30 +140,9 @@ def DEC2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    number = int(number)
-
-    if not (-(2 ** 29) <= number < 2 ** 29):
-        raise NumExcelError
-
-    bit_width = 30
-    negative = number < 0
-
-    if negative:
-        number += 1 << bit_width
-
-    string = oct(number)[2:]
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(desired_length)
+    number = handle_number(number, origin=dec)
+    value, negative = to_base(number, dec, oct)
+    return to_string(value, negative, oct, places)
 
 
 @xl.register()
@@ -104,30 +151,9 @@ def DEC2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    number = int(number)
-
-    if not (-(2 ** 39) <= number < 2 ** 39):
-        raise NumExcelError
-
-    bit_width = 40
-    negative = number < 0
-
-    if negative:
-        number += 1 << bit_width
-
-    string = hex(number)[2:].upper()
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    number = handle_number(number, origin=dec)
+    value, negative = to_base(number, dec, hex)
+    return to_string(value, negative, hex, places)
 
 
 @xl.register()
@@ -136,58 +162,9 @@ def BIN2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-    
-    if len(as_str) > 10:
-        raise NumExcelError
-    
-    permitted_digits = set("01")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 2)
-
-    bin_width = 10
-    oct_width = 30
-
-    mask = 1 << bin_width - 1
-
-    # I figured this out months ago and now I don't remember why it works
-    new_value = (value & ~mask) - (value & mask)
-    
-    if not (-2 ** 9 <= new_value < 2 ** 9):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << oct_width
-
-    # this doesn't have the `if new_value < 0 and new_value.bit_length() == 10 part`
-    # because I can't come up with a counterexample where it is needed, but I imagine when
-    # I come to refactor it can be put in the general case and not matter for BIN2OCT
-
-    string = oct(new_value)[2:]
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    value = handle_number(number, origin=bin)
+    new_value, negative = to_base(value, bin, oct)
+    return to_string(new_value, negative, oct, places)
 
 
 # the ___2DEC functions give a number not a string, and they do not take a `places`
@@ -195,35 +172,8 @@ def BIN2OCT(
 @xl.register()
 @xl.validate_args
 def BIN2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-        
-    if set(as_str) - set("01"):
-        raise NumExcelError
-
-    bit_width = 10
-    mask = 1 << bit_width - 1
-
-    value = int(as_str, 2)
-    new_value = (value & ~mask) - (value & mask)
-    
-    if not (-2**9 <= new_value < 2 ** 9):
-        raise NumExcelError
-    
+    value = handle_number(number, bin)
+    new_value, negative = to_base(value, bin, dec)
     return new_value 
 
 
@@ -233,52 +183,9 @@ def BIN2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-
-    permitted_digits = set("01")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 2)
-
-    bin_width = 10
-    hex_width = 40
-
-    mask = 1 << bin_width - 1
-    new_value = (value & ~mask) - (value & mask)
-
-    if not (-(2 ** 9) <= new_value < 2 ** 9):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << hex_width
-
-    string = hex(new_value)[2:].upper()
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    value = handle_number(number, bin)
+    new_value, negative = to_base(value, bin, hex)
+    return to_string(new_value, negative, hex, places)
 
 
 @xl.register()
@@ -287,86 +194,17 @@ def OCT2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-    
-    if len(as_str) > 10:
-        raise NumExcelError
-
-    permitted_digits = set("01234567")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 8)
-
-    oct_width = 30
-    bin_width = 10
-
-    mask = 1 << oct_width - 1
-    new_value = (value & ~mask) - (value & mask)
-
-    if not (-512 <= new_value < 512):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << bin_width
-
-    string = bin(new_value)[2:]
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    value = handle_number(number, oct)
+    new_value, negative = to_base(value, oct, bin)
+    return to_string(new_value, negative, bin, places)
 
 
 @xl.register()
 @xl.validate_args
 def OCT2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-
-    permitted_digits = set("01234567")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 8)
-    if not (0 <= value < 2 ** 30):
-        raise NumExcelError
-
-    bit_width = 30
-    mask = 1 << bit_width - 1
-
-    return (value & ~mask) - (value & mask)
+    value = handle_number(number, oct)
+    new_value, negative = to_base(value, oct, dec)
+    return new_value
 
 
 @xl.register()
@@ -375,53 +213,9 @@ def OCT2HEX(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-
-    permitted_digits = set("01234567")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 8)
-
-    oct_width = 30
-    hex_width = 40
-
-    mask = 1 << oct_width - 1
-    new_value = (value & ~mask) - (value & mask)
-    
-    # i think we don't need the lower bound because we are going from smaller to higher base
-    if not (new_value < 2 ** 29):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << hex_width
-
-    string = hex(new_value)[2:].upper()
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(desired_length)
+    value = handle_number(number, oct)
+    new_value, negative = to_base(value, oct, hex)
+    return to_string(new_value, negative, hex, places)
 
 
 @xl.register()
@@ -430,53 +224,9 @@ def HEX2BIN(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-    
-    if len(as_str) > 10:
-        raise NumExcelError
-        
-    permitted_digits = set("0123456789ABCDEFabcdef")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 16)
-
-    hex_width = 40
-    bin_width = 10
-
-    mask = 1 << hex_width - 1
-    new_value = (value & ~mask) - (value & mask)
-
-    if not (-2 ** 9 <= new_value < 2 ** 9):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << bin_width
-
-    string = bin(new_value)[2:]
-
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    value = handle_number(number, hex)
+    new_value, negative = to_base(value, hex, bin)
+    return to_string(new_value, negative, bin, places)
 
 
 @xl.register()
@@ -485,86 +235,18 @@ def HEX2OCT(
     number: func_xltypes.XlAnything, places: func_xltypes.XlAnything = UNUSED
 ) -> func_xltypes.XlText:
     places = handle_places(places)
-
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
-
-    if isinstance(number, func_xltypes.Blank):
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-    
-    permitted_digits = set("0123456789ABCDEFabcdef")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 16)
-
-    hex_width = 40
-    oct_width = 30
-
-    mask = 1 << hex_width - 1
-    new_value = (value & ~mask) - (value & mask)
-
-    if not (-(2 ** 29) <= new_value < 2 ** 29):
-        raise NumExcelError
-
-    negative = new_value < 0
-    if negative:
-        new_value += 1 << oct_width
-
-    string = oct(new_value)[2:]
-    if places is None:
-        return string
-
-    desired_length = len(string) if negative else places
-    if desired_length < len(string):
-        raise NumExcelError
-
-    return string.zfill(places)
+    value = handle_number(number, hex)
+    new_value, negative = to_base(value, hex, oct)
+    return to_string(new_value, negative, oct, places)
 
 
 @xl.register()
 @xl.validate_args
 def HEX2DEC(number: func_xltypes.XlAnything) -> func_xltypes.XlNumber:
-    if isinstance(number, func_xltypes.Boolean):
-        raise ValueExcelError
+    value = handle_number(number, hex)
+    new_value, negative = to_base(value, hex, dec)
 
-    if not number:  # covers Blank and empty string
-        as_str = "0"
-
-    elif isinstance(number, func_xltypes.Text):
-        as_str = str(number) if number else "0"
-
-    elif isinstance(number, func_xltypes.Number):
-        if number.is_decimal and not number.value.is_integer():
-            raise NumExcelError
-        as_str = str(int(number))
-        
-    if len(as_str) > 10:
-        raise NumExcelError
-
-    permitted_digits = set("0123456789ABCDEFabcdef")
-    if set(as_str) - permitted_digits:
-        raise NumExcelError
-
-    value = int(as_str, 16)
-    if not (0 <= value < 2 ** 40):
-        raise NumExcelError
-
-    bit_width = 40
-    mask = 1 << bit_width - 1
-
-    return (value & ~mask) - (value & mask)
+    return new_value
 
 
 # Base = Literal[bin, oct, hex]
