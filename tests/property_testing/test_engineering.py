@@ -56,7 +56,9 @@ def xl_numbers(min_value=None, max_value=None):
             max_value=max_value,
             allow_infinity=False,
             allow_nan=False,
-        ).filter(lambda x: x > 1e-300), # guard against tiny floats that excel can't handle
+        ).filter(
+            lambda x: x > 1e-300
+        ),  # guard against tiny floats that excel can't handle
     )
 
 
@@ -287,5 +289,3 @@ def test_oct2hex_and_hex2oct_are_inverses(octal_string):
 @settings(max_examples=MAX_EXAMPLES)
 def test_hex2dec_and_dec2hex_are_inverses(decimal_integer):
     assert decimal_integer == HEX2DEC(DEC2HEX(decimal_integer))
-
-
