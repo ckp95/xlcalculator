@@ -3,6 +3,7 @@ import math as pymath
 import mock
 
 from xlcalculator.xlfunctions import math, xlerrors, func_xltypes
+from xlcalculator.xlfunctions.xlerrors import NumExcelError, ValueExcelError
 
 
 class MathModuleTest(unittest.TestCase):
@@ -28,8 +29,8 @@ class MathModuleTest(unittest.TestCase):
         self.assertAlmostEqual(math.ASIN(-0.5), -0.523598776)
 
     def test_ASIN_out_of_bounds(self):
-        self.assertIsInstance(math.ASIN(-2), xlerrors.NumExcelError)
-        self.assertIsInstance(math.ASIN(-2), xlerrors.NumExcelError)
+        self.assertIsInstance(math.ASIN(-2), NumExcelError)
+        self.assertIsInstance(math.ASIN(-2), NumExcelError)
 
     def test_ASINH(self):
         self.assertAlmostEqual(math.ASINH(-2.5), -1.647231146)
@@ -50,7 +51,7 @@ class MathModuleTest(unittest.TestCase):
         self.assertEqual(math.CEILING(0.234, 0.01), 0.24)
         self.assertEqual(math.CEILING(0, -2), 0)
         self.assertEqual(math.CEILING(2, 0), 0)
-        self.assertIsInstance(math.CEILING(2, -2), xlerrors.NumExcelError)
+        self.assertIsInstance(math.CEILING(2, -2), NumExcelError)
 
     def test_COS(self):
         self.assertAlmostEqual(math.COS(1.047), 0.5001711)
@@ -76,14 +77,14 @@ class MathModuleTest(unittest.TestCase):
         self.assertEqual(math.FACT(5), 120)
         self.assertEqual(math.FACT(1.9), 1)
         self.assertEqual(math.FACT(0), 1)
-        self.assertIsInstance(math.FACT(-1), xlerrors.NumExcelError)
+        self.assertIsInstance(math.FACT(-1), NumExcelError)
         self.assertEqual(math.FACT(1), 1)
 
     def test_FACTDOUBLE(self):
         self.assertEqual(math.FACTDOUBLE(6), 48)
         self.assertEqual(math.FACTDOUBLE(7), 105)
         self.assertEqual(math.FACTDOUBLE(0), 1)
-        self.assertIsInstance(math.FACTDOUBLE(-1), xlerrors.NumExcelError)
+        self.assertIsInstance(math.FACTDOUBLE(-1), NumExcelError)
         self.assertEqual(math.FACTDOUBLE(1), 1)
 
     def test_FLOOR(self):
@@ -97,10 +98,10 @@ class MathModuleTest(unittest.TestCase):
 
     def test_FLOOR_significance(self):
         self.assertIsInstance(math.FLOOR(2, 0), xlerrors.DivZeroExcelError)
-        self.assertIsInstance(math.FLOOR(2.5, -2), xlerrors.NumExcelError)
+        self.assertIsInstance(math.FLOOR(2.5, -2), NumExcelError)
 
     def test_FLOOR_errors(self):
-        self.assertIsInstance(math.FLOOR(2.5, -2), xlerrors.NumExcelError)
+        self.assertIsInstance(math.FLOOR(2.5, -2), NumExcelError)
 
         self.assertIsInstance(math.FLOOR("hello", -2),
                               xlerrors.ValueExcelError)
@@ -217,7 +218,7 @@ class MathModuleTest(unittest.TestCase):
         self.assertEqual(math.SQRT(4.0), 2.0)
 
     def test_SQRT_with_neg_number(self):
-        self.assertIsInstance(math.SQRT(-4), xlerrors.NumExcelError)
+        self.assertIsInstance(math.SQRT(-4), NumExcelError)
 
     def test_SQRT_with_bad_arg(self):
         self.assertIsInstance(math.SQRT('bad'), xlerrors.ValueExcelError)
@@ -227,7 +228,7 @@ class MathModuleTest(unittest.TestCase):
         self.assertAlmostEqual(math.SQRTPI(2), 2.50662827)
 
     def test_SQRTPI_negative_number(self):
-        self.assertIsInstance(math.SQRTPI(-2), xlerrors.NumExcelError)
+        self.assertIsInstance(math.SQRTPI(-2), NumExcelError)
 
     def test_SUM(self):
         self.assertEqual(math.SUM(func_xltypes.Array([[1, 2], [3, 4]])), 10)
@@ -310,7 +311,7 @@ class MathModuleTest(unittest.TestCase):
 
     def test_SUMPRODUCT_ranges_with_errors(self):
         range1 = func_xltypes.Array(
-            [[xlerrors.NumExcelError('err')], [10], [3]]
+            [[NumExcelError('err')], [10], [3]]
         )
         range2 = func_xltypes.Array([[3], [3], [1]])
         self.assertIsInstance(

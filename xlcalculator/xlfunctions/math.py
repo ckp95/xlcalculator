@@ -7,6 +7,7 @@ import pandas as pd
 from scipy.special import factorial2
 
 from . import xl, xlerrors, xlcriteria, func_xltypes
+from .xlerrors import NumExcelError, ValueExcelError
 
 # Testing Hook
 rand = np.random.rand
@@ -66,7 +67,7 @@ def ASIN(
         asin-function-81fb95e5-6d6f-48c4-bc45-58f955c6d347
     """
     if number < -1 or number > 1:
-        raise xlerrors.NumExcelError(f'number {number} must be less than '
+        raise NumExcelError(f'number {number} must be less than '
                                      f'or equal to -1 or greater ot equal '
                                      f'to 1')
 
@@ -131,7 +132,7 @@ def CEILING(
         return 0
 
     if significance < 0 < number:
-        raise xlerrors.NumExcelError('significance below zero and number \
+        raise NumExcelError('significance below zero and number \
                                       above zero is not allowed')
 
     number = float(number)
@@ -252,7 +253,7 @@ def FACT(
         fact-function-ca8588c2-15f2-41c0-8e8c-c11bd471a4f3
     """
     if number < 0:
-        raise xlerrors.NumExcelError('Negative values are not allowed')
+        raise NumExcelError('Negative values are not allowed')
 
     return math.factorial(int(number))
 
@@ -268,7 +269,7 @@ def FACTDOUBLE(
         factdouble-function-e67697ac-d214-48eb-b7b7-cce2589ecac8
     """
     if number < 0:
-        raise xlerrors.NumExcelError('Negative values are not allowed')
+        raise NumExcelError('Negative values are not allowed')
 
     return factorial2(int(number), exact=True)
 
@@ -287,7 +288,7 @@ def FLOOR(
     """
 
     if significance < 0 < number:
-        raise xlerrors.NumExcelError('number and significance needto have \
+        raise NumExcelError('number and significance needto have \
                                       the same sign')
     if number == 0:
         return 0
@@ -521,7 +522,7 @@ def SQRT(
         sqrt-function-654975c2-05c4-4831-9a24-2c65e4040fdf
     """
     if number < 0:
-        raise xlerrors.NumExcelError(f'number {number} must be non-negative')
+        raise NumExcelError(f'number {number} must be non-negative')
 
     return math.sqrt(number)
 
@@ -537,7 +538,7 @@ def SQRTPI(
         sqrtpi-function-1fb4e63f-9b51-46d6-ad68-b3e7a8b519b4
     """
     if number < 0:
-        raise xlerrors.NumExcelError(f'number {number} must be non-negative')
+        raise NumExcelError(f'number {number} must be non-negative')
 
     return math.sqrt(number * math.pi)
 
